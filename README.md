@@ -59,7 +59,7 @@ results generated using this program or modifications of it.
 
   This code uses MPI as well as openMP parallelization, so you need to make
   sure that your system supports this. The code was developed and tested 
-  in a GNU/Linux environment using openMPI version 1.7.4 as a MPI implementation 
+  in a GNU/Linux environment using Open MPI version 1.7.4 as a MPI implementation 
   and gcc version 4.8.2 as a compiler, but different versions/compilers might work 
   just as well.
   
@@ -78,7 +78,7 @@ results generated using this program or modifications of it.
   compute nodes and OMP_NUM_THREADS set to the number of CPU-cores per
   node. If you happen to use the TORQUE Resource Manager, a sample 
   submission script called "run.pbs" is supplied in the top directory.
-  The script is set up for 6 nodes and 16 cores. You might want to modify these numbers
+  The script is set up for 4 nodes and 16 cores. You might want to modify these numbers
   to fit your environment.
   
   Furthermore, depending on your MPI version and cluster architecture,
