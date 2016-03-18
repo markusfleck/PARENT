@@ -105,13 +105,13 @@ results generated using this program or modifications of it.
   to "test_system/sample_output/sample_output_MIE.txt" and 
   "test_system/sample_output/sample_output_MIST.txt" respectively,
   this might well be due to machine precision and therefore be perfectly okay.
-  Generally perform multiple of these test and check that you are constantly getting 
+  Generally perform multiple of these tests and check that you are constantly getting 
   the same results. If this is not the case, that means that your system is not executing 
   the code in a proper manner (run condition).
   
   After executing the "run.sh" script, the compiled executables are located in the folder
   "exec". If this is not the case, you should check the file "output/log.txt" to see what went wrong.
-  For compilation, the "Makefile" is processed by "run.sh", so this is where you might 
+  For compilation, the "Makefile" in the top directory is processed by "run.sh", so this is where you might 
   want to start troubleshooting (or maybe fine tuning).
   
   
@@ -156,8 +156,9 @@ results generated using this program or modifications of it.
   
     make >> ${OUTDIR}/log.txt 2>&1
     
-  in run.sh (after you compiled successfully for the first time), but keep in mind to recompile when
-  you change computer architecture (e. g. heterogeneous cluster) and also make sure that you are not
+  in run.sh (after you compiled successfully for the first time), but keep in mind to recompile with
+  	make clean; make
+  when you change computer architecture (e. g. heterogeneous cluster) and also make sure that you are not
   overwriting previous results (change NAME in the parameterfile)
   
   
