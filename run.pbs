@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -l nodes=2:ppn=16
+#PBS -v LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+
+
+# Specify how many MPI processes and how many threads per process you would like to use (in compliance with the above requested)
+export MPI_NUM_PROCS=2
+export OMP_NUM_THREADS=16
+
+
+# Navigate to the current working directory and start to compile and run the program
+cd $PBS_O_WORKDIR
+bash run.sh parameters
+
+
+
+

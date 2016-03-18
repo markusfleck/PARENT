@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Specify the GROMACS .xtc and .top input files relative to the top directory
+TRJ="test_system/UBQ_UBM2.xtc"
+TOP="test_system/UBQ_UBM2.top"
+
+#Optional: Specify the index file and the group names for which (leave blank if not wanted)
+NDX="test_system/UBQ_UBM2.ndx"
+GRP1="r_1"
+GRP2="r_2"
+
+# Specify your output directory
+OUTDIR=output
+
+# Use the name of the working directory as a base name for the output files ( you can change this to e. g. to name="my_project" if you prefer ) 
+NAME=`pwd | awk 'BEGIN{FS="/"}{print $(NF)}'` 
+
+# Specify the number of  bins for bonds, angles and dihedrals (torsions) you want PARENT.x to use for building the 1D and 2D histograms for entropy calculation.
+BBINS1D=50
+ABINS1D=50
+DBINS1D=50
+BBINS2D=50
+ABINS2D=50
+DBINS2D=50
+
+#  Specify the name of the backbone atoms as in the .top file (can be left empty, but gives more accurate results)
+BACKBONE_ATOMS="CA C N H1 O1"
+
