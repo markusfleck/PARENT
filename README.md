@@ -32,7 +32,7 @@ results generated using this program or modifications of it.
   your Linux system. 
   For example, if you want to use a single CPU with four cores for the calculation, issue 
   
-  export MPI_NUM_PROCS=1; export OMP_NUM_THREADS=4; ./run.sh parameters
+  	export MPI_NUM_PROCS=1; export OMP_NUM_THREADS=4; ./run.sh parameters
   
   in a bash shell. The output of the configurational entropy terms using the MIST approximation 
   is contained in "output/PARENT_suite_MIST.txt". If you are looking for the pairwise mutual
