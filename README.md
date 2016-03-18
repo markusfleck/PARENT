@@ -196,7 +196,7 @@ Furthermore additional information is attached to the header of the resulting .b
 
 The program is used in the following manner:
 
-	./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [double_precision]
+	./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 ..." [double_precision]
 
 input.top, input.xtc and output.bat are self-explanatory.
 
