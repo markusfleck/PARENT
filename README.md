@@ -157,7 +157,9 @@ results generated using this program or modifications of it.
     make >> ${OUTDIR}/log.txt 2>&1
     
   in run.sh (after you compiled successfully for the first time), but keep in mind to recompile with
-  	make clean; make
+  	
+    make clean; make
+  
   when you change computer architecture (e. g. heterogeneous cluster) and also make sure that you are not
   overwriting previous results (change NAME in the parameterfile)
   
