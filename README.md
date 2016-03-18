@@ -203,7 +203,7 @@ input.top, input.xtc and output.bat are self-explanatory.
 "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." lists the names of atoms belonging to a rigid backbone
 as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Also see section 2 for further information.
 
-double_precision (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
+\[double_precision\] (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
 which is recommended, since all calculation is done in double precision anyway. Only use single precision if you are short of harddisk storage.
 
 
@@ -244,7 +244,7 @@ In the worst case scenario, the program might crash due to memory shortage witho
 
 The program is used in the following manner:
 
-./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+./PARENT.x input.bat entropy.par \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
 
 input.bat is the result from the conversion to internal BAT coordinates done with BAT_builder.x.
 
