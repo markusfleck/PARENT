@@ -248,7 +248,7 @@ The program is used in the following manner:
 
 input.bat is the result from the conversion to internal BAT coordinates done with BAT_builder.x.
 
-entropy.par is the binary output file, containing all the 1D and 2D entropy terms (from which the mutual information terms can be easiliy calculated)
+entropy.par is the binary output file, containing all the 1D and 2D entropy terms (from which the mutual information terms can be easiliy calculated).
 The header of the file includes the same information as for the .bat file and additionally
 
 \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
