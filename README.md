@@ -230,8 +230,8 @@ DOI: 10.1021/acs.jctc.5b01217
 
 and additionally
 
-B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).
-J. Numata, and E.-W. Knapp, J. Chem. Theory Comput. 8: 1235 (2012).
+B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).  
+J. Numata, and E.-W. Knapp, J. Chem. Theory Comput. 8: 1235 (2012).  
 
 Calculations are done using MPI as well as openMP parallelization, making feasible the calculation of the 
 configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
