@@ -203,7 +203,7 @@ input.top, input.xtc and output.bat are self-explanatory.
 "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." lists the names of atoms belonging to a rigid backbone
 as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Also see section 2 for further information.
 
-[double_precision] (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
+double_precision (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
 which is recommended, since all calculation is done in double precision anyway. Only use single precision if you are short of harddisk storage.
 
 
@@ -211,7 +211,7 @@ which is recommended, since all calculation is done in double precision anyway. 
 
 Additionally, the program can perform a back-conversion from .bat to .xtc, which is done by issuing the following command:
 
-./BAT_builder.x input.bat output.xtc
+	./BAT_builder.x input.bat output.xtc
 
 
 When the trajectory of a complex consisting of more than one molecule is converted, non-physical bonds (termed pseudo-bonds)
