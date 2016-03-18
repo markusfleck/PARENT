@@ -178,25 +178,25 @@ this suite. The main purpose of this program is to convert every frame in the .x
 which is stored in Cartesian coordinates, to internal bond-angle-torsion (BAT, Z-matrix) coordinates.
 Furthermore additional information is attached to the header of the resulting .bat file, namely 
 
--a version number
-
--the precision of the file (single or double precision)
-
--the number of non-redundant torsion angles(dihedrals) in the system 
-(which relates to the number of atoms by #atoms = #torsions + 3)
-
--the number of frames in the trajectory
-
--a list of all non-redundant torsion angles
-(specifying their constituent atoms using the atom numbers from the .top file)
-
--atom weights of all atoms in the system (not used yet)
+	-a version number
+	
+	-the precision of the file (single or double precision)
+	
+	-the number of non-redundant torsion angles(dihedrals) in the system 
+	(which relates to the number of atoms by #atoms = #torsions + 3)
+	
+	-the number of frames in the trajectory
+	
+	-a list of all non-redundant torsion angles
+	(specifying their constituent atoms using the atom numbers from the .top file)
+	
+	-atom weights of all atoms in the system (not used yet)
 
 
 
 The program is used in the following manner:
 
-./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [double_precision]
+	./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [double_precision]
 
 input.top, input.xtc and output.bat are self-explanatory.
 
