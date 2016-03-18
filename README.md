@@ -217,7 +217,7 @@ results generated using this program or modifications of it.
     
   3.2) PARENT.x
   
-    This program can be considered the core of this suite. It calculates the conformational entropy according to the pairwise 
+    This program can be considered the core of this suite. It calculates the configurational entropy according to the pairwise 
     Mutual Information Expansion (MIE). Please read  
     
     B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).
@@ -225,7 +225,7 @@ results generated using this program or modifications of it.
     
     and cite these papers in works that publish results generated using this code or any modifications of this code.
     Calculations are done using MPI as well as openMP parallelization, making feasible the calculation of the 
-    conformational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
+    configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
     Calculation time is scaling quadratically with the number of atoms. 
     
     PARENT.x takes the .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
@@ -298,7 +298,7 @@ results generated using this program or modifications of it.
     Although based on a different mathematical framework than MIE, the Maximum Information Spanning Tree (MIST) approximation relies on the same 
     terms to be computed as for MIE. Empirically it seems to demonstrate superior convergence properties, so from a computational perspective
     one is tempted to consider MIST a refinement of MIE. We highly recommend applying get_PAR_MIST.x to your output .par file of PARENT.x (at least if you are 
-    interested in total conformational entropy values). This program also makes use of MPI/openMP hybrid parallelization, which significantly reduces
+    interested in total configurational entropy values). This program also makes use of MPI/openMP hybrid parallelization, which significantly reduces
     computation time. Please read and cite the following paper if you publish results generated using this code or any modifications:
     
     B. M. King, N. W. Silver, and B. Tidor. J. Phys. Chem. B 116: 2891 (2012).
