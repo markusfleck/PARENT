@@ -257,76 +257,76 @@ The header of the file includes the same information as for the .bat file and ad
 
 Remember that you need to invoke the program using MPI, e. g.
 
-mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
+	mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
 
 for openMPI version 1.7.4 on a cluster of 4 nodes with 16 cores per node (For InfiniBand, you change tcp to openib).
 
 
-  3.3) get_PAR_MIE.x
-    
-    The output of PARENT.x is a binary file (.par), so get_PAR_MIE.x is provided to output its contents to stdout in text form.
-    First it extracts a list of all 1D entropy terms of all degrees of freedom (bonds, angles, torsions). Then follows
-    a list of all 2D entropy terms between all pairs of degrees of freedom, with an additional last column, which
-    represents the pairwise mutual information. In the end summed values per category (bonds, angles, dihedrals)
-    are written, as well as the total entropy computed.
-    
-    
-    The program is used in the following manner:
-    
-      ./get_PAR_MIE.x input.par
-    
-    
-  3.4) get_PAR_info.x
-  
-    The program previous program (get_PAR_MIE.x) outputs all entropy/mutual information terms, but gives no information about
-    which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_MIE.x is provided. 
-    
-    The output starts with the bonds indexing. The columns are indicating:
-    #bond #atom1 #atom2 
-    
-    In the same manner follow the angles:
-    #angle #atom1 #atom2 #atom3
-    
-    The dihedrals contain (additionally to #atom4) two special columns:
-    #dihedral #atom1 #atom2 #atom3 #atom4    dihedral_type   phaseangle_of
-    
-    The column "dihedral_type" is set to 0 for a common dihedral, to -1 for an improper dihedral, and to 1 if the dihedral contains a 
-    pseudo bond (see subsection 3.1. For every pseudo bond, there will be 3 pseudo dihedrals. The 2 atoms which all of them share
-    constitute the pseudo bond.).
-    
-    The last column is set to -1 if the dihedral is not a phase angle (see subsection 3.1). Otherwise it will be set to the index of the dihedral to which
-    it is relative to.
-    
-    The program is used in the following manner:
-    
-      ./get_PAR_info.x input.par
-      
-      
-  3.5) get_PAR_MIST.x
-  
-    Although based on a different mathematical framework than MIE, the Maximum Information Spanning Tree (MIST) approximation relies on the same 
-    terms to be computed as for MIE. Empirically it seems to demonstrate superior convergence properties, so from a computational perspective
-    one is tempted to consider MIST a refinement of MIE. We highly recommend applying get_PAR_MIST.x to your output .par file of PARENT.x (at least if you are 
-    interested in total configurational entropy values). This program also makes use of MPI/openMP hybrid parallelization, which significantly reduces
-    computation time. Please read and cite the following paper if you publish results generated using this code or any modifications:
-    
-    B. M. King, N. W. Silver, and B. Tidor. J. Phys. Chem. B 116: 2891 (2012).
-    
-    The program is used in the following manner:
-    
-      ./get_PAR_MIST.x input.par output.txt
-      
-    Remember that you need to invoke it using MPI (see subsection 3.2 for further details).
-    
-    
-    
-    
-    
+3.3) get_PAR_MIE.x
+
+The output of PARENT.x is a binary file (.par), so get_PAR_MIE.x is provided to output its contents to stdout in text form.
+First it extracts a list of all 1D entropy terms of all degrees of freedom (bonds, angles, torsions). Then follows
+a list of all 2D entropy terms between all pairs of degrees of freedom, with an additional last column, which
+represents the pairwise mutual information. In the end summed values per category (bonds, angles, dihedrals)
+are written, as well as the total entropy computed.
+
+
+The program is used in the following manner:
+
+./get_PAR_MIE.x input.par
+
+
+3.4) get_PAR_info.x
+
+The program previous program (get_PAR_MIE.x) outputs all entropy/mutual information terms, but gives no information about
+which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_MIE.x is provided. 
+
+The output starts with the bonds indexing. The columns are indicating:
+#bond #atom1 #atom2 
+
+In the same manner follow the angles:
+#angle #atom1 #atom2 #atom3
+
+The dihedrals contain (additionally to #atom4) two special columns:
+#dihedral #atom1 #atom2 #atom3 #atom4    dihedral_type   phaseangle_of
+
+The column "dihedral_type" is set to 0 for a common dihedral, to -1 for an improper dihedral, and to 1 if the dihedral contains a 
+pseudo bond (see subsection 3.1. For every pseudo bond, there will be 3 pseudo dihedrals. The 2 atoms which all of them share
+constitute the pseudo bond.).
+
+The last column is set to -1 if the dihedral is not a phase angle (see subsection 3.1). Otherwise it will be set to the index of the dihedral to which
+it is relative to.
+
+The program is used in the following manner:
+
+./get_PAR_info.x input.par
+
+
+3.5) get_PAR_MIST.x
+
+Although based on a different mathematical framework than MIE, the Maximum Information Spanning Tree (MIST) approximation relies on the same 
+terms to be computed as for MIE. Empirically it seems to demonstrate superior convergence properties, so from a computational perspective
+one is tempted to consider MIST a refinement of MIE. We highly recommend applying get_PAR_MIST.x to your output .par file of PARENT.x (at least if you are 
+interested in total configurational entropy values). This program also makes use of MPI/openMP hybrid parallelization, which significantly reduces
+computation time. Please read and cite the following paper if you publish results generated using this code or any modifications:
+
+B. M. King, N. W. Silver, and B. Tidor. J. Phys. Chem. B 116: 2891 (2012).
+
+The program is used in the following manner:
+
+./get_PAR_MIST.x input.par output.txt
+
+Remember that you need to invoke it using MPI (see subsection 3.2 for further details).
+
+
+
+
+
 4) CONTACT INFORMATION
 
-    If you have any questions, feel free to contact: 
-    
-      markus.fleck@univie.ac.at
+If you have any questions, feel free to contact: 
+
+markus.fleck@univie.ac.at
 
 
     
