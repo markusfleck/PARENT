@@ -223,12 +223,16 @@ would be treated separately, in isolation.
 3.2) PARENT.x
 
 This program can be considered the core of this suite. It calculates the configurational entropy according to the pairwise 
-Mutual Information Expansion (MIE). Please read  
+Mutual Information Expansion (MIE). For more detailed information, please read our article in the Journal of Chemical Theory and Computation  
+
+"PARENT: A Parallel Software Suite for the Calculation of Configurational Entropy in Biomolecular Systems"  
+DOI: 10.1021/acs.jctc.5b01217 
+
+and additionally
 
 B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).
 J. Numata, and E.-W. Knapp, J. Chem. Theory Comput. 8: 1235 (2012).
 
-and cite these papers in works that publish results generated using this code or any modifications of this code.
 Calculations are done using MPI as well as openMP parallelization, making feasible the calculation of the 
 configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
 Calculation time is scaling quadratically with the number of atoms. 
