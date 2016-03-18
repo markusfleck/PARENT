@@ -237,8 +237,8 @@ Calculations are done using MPI as well as openMP parallelization, making feasib
 configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
 Calculation time is scaling quadratically with the number of atoms. 
 
-PARENT.x takes the .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
-than the size of the .bat file, otherwise the Linux uses the hard-disk for temporary storage, which slows down the calculation considerably.
+PARENT.x takes a .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
+than the size of the .bat file, otherwise Linux uses the hard-disk for temporary storage, which slows down the calculation considerably.
 In the worst case scenario, the program might crash due to memory shortage without a warning.
 
 
