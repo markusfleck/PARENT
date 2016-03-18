@@ -92,8 +92,8 @@ results generated using this program or modifications of it.
   After executing the "run.sh" script, issue the following commands to check if 
   everything went correctly:
   
-    tail -n 18 output/PARENT_suite_MIE.txt > compare_MIE.txt
-    tail -n 12 output/PARENT_suite_MIST.txt > compare_MIST.txt
+    tail -n 16 output/*_MIE.txt > compare_MIE.txt
+    tail -n 10 output/*_MIST.txt > compare_MIST.txt
     
     diff compare_MIE.txt test_system/sample_output/sample_output_MIE.txt
     diff compare_MIST.txt test_system/sample_output/sample_output_MIST.txt
