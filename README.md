@@ -251,13 +251,13 @@ input.bat is the result from the conversion to internal BAT coordinates done wit
 entropy.par is the binary output file, containing all the 1D and 2D entropy terms (from which the mutual information terms can be easiliy calculated)
 The header of the file includes the same information as for the .bat file and additionally
 
-#bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+\#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
 ,the numbers of bins which were used for the entropy calculation. See section 2 for further information.
 
 
 Remember that you need to invoke the program using MPI, e. g.
 
-mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
 
 for openMPI version 1.7.4 on a cluster of 4 nodes with 16 cores per node (For InfiniBand, you change tcp to openib).
 
