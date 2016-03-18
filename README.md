@@ -244,7 +244,7 @@ In the worst case scenario, the program might crash due to memory shortage witho
 
 The program is used in the following manner:
 
-./PARENT.x input.bat entropy.par \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
+	./PARENT.x input.bat entropy.par \#bondsbins1D \#anglesbins1D \#dihedralsbins1D \#bondsbins2D \#anglesbins2D \#dihedralsbins2D
 
 input.bat is the result from the conversion to internal BAT coordinates done with BAT_builder.x.
 
