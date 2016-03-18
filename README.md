@@ -161,7 +161,7 @@ results generated using this program or modifications of it.
     make clean; make
   
   when you change computer architecture (e. g. heterogeneous cluster) and also make sure that you are not
-  overwriting previous results (change NAME in the parameterfile)
+  overwriting previous results (change NAME in the parameterfile).
   
   
   
@@ -176,19 +176,21 @@ results generated using this program or modifications of it.
     trajectory files, which are then processed by PARENT.x, the core program of
     this suite. The main purpose of this program is to convert every frame in the .xtc file,
     which is stored in Cartesian coordinates, to internal bond-angle-torsion (BAT, Z-matrix) coordinates.
-    Furthermore additional information is attached to the header of the resulting .bat file, namely
+    Furthermore additional information is attached to the header of the resulting .bat file, namely 
     
-    a version number
+    -a version number
     
-    the precision of the file (single or double precision)
+    -the precision of the file (single or double precision)
     
-    the number of non-redundant torsion angles(dihedrals) in the system (which relates to the number of atoms by #atoms = #torsions + 3)
-
-    the number of frames in the trajectory
+    -the number of non-redundant torsion angles(dihedrals) in the system 
+     (which relates to the number of atoms by #atoms = #torsions + 3)
     
-    a list of all non-redundant torsion angles (specifying their constituent atoms using the atom numbers from the .top file)
+    -the number of frames in the trajectory
     
-    atom weights of all atoms in the system (not used yet)
+    -a list of all non-redundant torsion angles
+     (specifying their constituent atoms using the atom numbers from the .top file)
+    
+    -atom weights of all atoms in the system (not used yet)
     
     
     
