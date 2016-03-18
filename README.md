@@ -172,92 +172,92 @@ results generated using this program or modifications of it.
   
   3.1) BAT_builder.x
     
-    This program converts your GROMACS topology (.top) and trajectory (.xtc) files to binary .bat
-    trajectory files, which are then processed by PARENT.x, the core program of
-    this suite. The main purpose of this program is to convert every frame in the .xtc file,
-    which is stored in Cartesian coordinates, to internal bond-angle-torsion (BAT, Z-matrix) coordinates.
-    Furthermore additional information is attached to the header of the resulting .bat file, namely 
-    
-    -a version number
-    
-    -the precision of the file (single or double precision)
-    
-    -the number of non-redundant torsion angles(dihedrals) in the system 
-     (which relates to the number of atoms by #atoms = #torsions + 3)
-    
-    -the number of frames in the trajectory
-    
-    -a list of all non-redundant torsion angles
-     (specifying their constituent atoms using the atom numbers from the .top file)
-    
-    -atom weights of all atoms in the system (not used yet)
-    
-    
-    
-    The program is used in the following manner:
-    
-      ./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [double_precision]
-    
-    input.top, input.xtc and output.bat are self-explanatory.
-    
-    "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." lists the names of atoms belonging to a rigid backbone
-    as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Also see section 2 for further information.
-    
-    [double_precision] (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
-    which is recommended, since all calculation is done in double precision anyway. Only use single precision if you are short of harddisk storage.
+This program converts your GROMACS topology (.top) and trajectory (.xtc) files to binary .bat
+trajectory files, which are then processed by PARENT.x, the core program of
+this suite. The main purpose of this program is to convert every frame in the .xtc file,
+which is stored in Cartesian coordinates, to internal bond-angle-torsion (BAT, Z-matrix) coordinates.
+Furthermore additional information is attached to the header of the resulting .bat file, namely 
 
-    
-    
-    
-    Additionally, the program can perform a back-conversion from .bat to .xtc, which is done by issuing the following command:
+-a version number
 
-      ./BAT_builder.x input.bat output.xtc
-      
-      
-    When the trajectory of a complex consisting of more than one molecule is converted, non-physical bonds (termed pseudo-bonds)
-    are added in order for the complex to have a connected topology. This is done automatically. Also the algorithm guarantees
-    that the chosen topology for every molecule in the complex is consistent with the topology which would be chosen if the molecules 
-    would be treated separately, in isolation. 
-    
-    
-  3.2) PARENT.x
-  
-    This program can be considered the core of this suite. It calculates the configurational entropy according to the pairwise 
-    Mutual Information Expansion (MIE). Please read  
-    
-    B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).
-    J. Numata, and E.-W. Knapp, J. Chem. Theory Comput. 8: 1235 (2012).
-    
-    and cite these papers in works that publish results generated using this code or any modifications of this code.
-    Calculations are done using MPI as well as openMP parallelization, making feasible the calculation of the 
-    configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
-    Calculation time is scaling quadratically with the number of atoms. 
-    
-    PARENT.x takes the .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
-    than the size of the .bat file, otherwise the Linux uses the hard-disk for temporary storage, which slows down the calculation considerably.
-    In the worst case scenario, the program might crash due to memory shortage without a warning.
-    
-    
-    The program is used in the following manner:
-    
-      ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
-      
-    input.bat is the result from the conversion to internal BAT coordinates done with BAT_builder.x.
-    
-    entropy.par is the binary output file, containing all the 1D and 2D entropy terms (from which the mutual information terms can be easiliy calculated)
-    The header of the file includes the same information as for the .bat file and additionally
-    
-    #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
-     ,the numbers of bins which were used for the entropy calculation. See section 2 for further information.
-     
-     
-     Remember that you need to invoke the program using MPI, e. g.
-     
-      mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
-     
-     for openMPI version 1.7.4 on a cluster of 4 nodes with 16 cores per node (For InfiniBand, you change tcp to openib).
-     
-     
+-the precision of the file (single or double precision)
+
+-the number of non-redundant torsion angles(dihedrals) in the system 
+(which relates to the number of atoms by #atoms = #torsions + 3)
+
+-the number of frames in the trajectory
+
+-a list of all non-redundant torsion angles
+(specifying their constituent atoms using the atom numbers from the .top file)
+
+-atom weights of all atoms in the system (not used yet)
+
+
+
+The program is used in the following manner:
+
+./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [double_precision]
+
+input.top, input.xtc and output.bat are self-explanatory.
+
+"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." lists the names of atoms belonging to a rigid backbone
+as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Also see section 2 for further information.
+
+[double_precision] (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
+which is recommended, since all calculation is done in double precision anyway. Only use single precision if you are short of harddisk storage.
+
+
+
+
+Additionally, the program can perform a back-conversion from .bat to .xtc, which is done by issuing the following command:
+
+./BAT_builder.x input.bat output.xtc
+
+
+When the trajectory of a complex consisting of more than one molecule is converted, non-physical bonds (termed pseudo-bonds)
+are added in order for the complex to have a connected topology. This is done automatically. Also the algorithm guarantees
+that the chosen topology for every molecule in the complex is consistent with the topology which would be chosen if the molecules 
+would be treated separately, in isolation. 
+
+
+3.2) PARENT.x
+
+This program can be considered the core of this suite. It calculates the configurational entropy according to the pairwise 
+Mutual Information Expansion (MIE). Please read  
+
+B. J. Killian, J. Y. Kravitz, and M. K. Gilson, J. Chem. Phys. 127: 024107 (2007).
+J. Numata, and E.-W. Knapp, J. Chem. Theory Comput. 8: 1235 (2012).
+
+and cite these papers in works that publish results generated using this code or any modifications of this code.
+Calculations are done using MPI as well as openMP parallelization, making feasible the calculation of the 
+configurational entropy using MIE for large, biologically realistic molecules, considerable sampling or large sets of structures.
+Calculation time is scaling quadratically with the number of atoms. 
+
+PARENT.x takes the .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
+than the size of the .bat file, otherwise the Linux uses the hard-disk for temporary storage, which slows down the calculation considerably.
+In the worst case scenario, the program might crash due to memory shortage without a warning.
+
+
+The program is used in the following manner:
+
+./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+
+input.bat is the result from the conversion to internal BAT coordinates done with BAT_builder.x.
+
+entropy.par is the binary output file, containing all the 1D and 2D entropy terms (from which the mutual information terms can be easiliy calculated)
+The header of the file includes the same information as for the .bat file and additionally
+
+#bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+,the numbers of bins which were used for the entropy calculation. See section 2 for further information.
+
+
+Remember that you need to invoke the program using MPI, e. g.
+
+mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
+
+for openMPI version 1.7.4 on a cluster of 4 nodes with 16 cores per node (For InfiniBand, you change tcp to openib).
+
+
   3.3) get_PAR_MIE.x
     
     The output of PARENT.x is a binary file (.par), so get_PAR_MIE.x is provided to output its contents to stdout in text form.
