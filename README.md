@@ -191,6 +191,8 @@ Furthermore additional information is attached to the header of the resulting .b
 	(specifying their constituent atoms using the atom numbers from the .top file)
 	
 	-atom weights of all atoms in the system (not used yet)
+	
+	-atom names, residue names, residue numbers and molecule names for every atom in the system
 
 
 
