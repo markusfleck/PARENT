@@ -335,7 +335,7 @@ and use
 
 	#include src/util/io/io.h
 	
-in your c++ source files.
+in your c++ source files. The Makefile in the top directory additionally hints the proper usage.
 
 
 
