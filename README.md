@@ -308,7 +308,8 @@ Although based on a different mathematical framework than MIE, the Maximum Infor
 terms to be computed as for MIE. Empirically it seems to demonstrate superior convergence properties, so from a computational perspective
 one is tempted to consider MIST a refinement of MIE. We highly recommend applying get_PAR_MIST.x to your output .par file of PARENT.x (at least if you are 
 interested in total configurational entropy values). This program also makes use of MPI/openMP hybrid parallelization, which significantly reduces
-computation time. In addition to our article   
+computation time. In addition to our article in the Journal of Chemical Theory and Computation   
+
 "PARENT: A Parallel Software Suite for the Calculation of Configurational Entropy in Biomolecular Systems"  
 DOI: 10.1021/acs.jctc.5b01217 
 
