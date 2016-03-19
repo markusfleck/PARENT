@@ -272,7 +272,7 @@ are written, as well as the total entropy computed.
 
 The program is used in the following manner:
 
-./get_PAR_MIE.x input.par
+	./get_PAR_MIE.x input.par
 
 
 3.4) get_PAR_info.x
@@ -281,13 +281,16 @@ The previous program (get_PAR_MIE.x) outputs all entropy/mutual information term
 which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_info.x is provided. 
 
 The output starts with the bonds indexing. The columns are indicating:
-\#bond \#atom1 \#atom2 
+	
+	\#bond \#atom1 \#atom2 
 
 In the same manner follow the angles:
-\#angle \#atom1 \#atom2 \#atom3
+	
+	\#angle \#atom1 \#atom2 \#atom3
 
 The dihedrals contain (additionally to #atom4) two special columns:
-\#dihedral \#atom1 \#atom2 \#atom3 \#atom4    dihedral_type   phaseangle_of
+
+	\#dihedral \#atom1 \#atom2 \#atom3 \#atom4    dihedral_type   phaseangle_of
 
 The column "dihedral_type" is set to 0 for a common dihedral, to -1 for an improper dihedral, and to 1 if the dihedral contains a pseudo bond (see subsection 3.1. For every pseudo bond, there will be 3 pseudo dihedrals. The 2 atoms which all of them share
 constitute the pseudo bond.).
