@@ -201,7 +201,7 @@ The program is used in the following manner:
 input.top, input.xtc and output.bat are self-explanatory.
 
 "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." lists the names of atoms belonging to a rigid backbone
-as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Also see section 2 for further information.
+as stated in the .top file, e. g.  "CA C N H1 O1" for a protein. Phaseangles are defined relative to a rigid dihedral. Also see section 2 for further information.
 
 \[double_precision\] (the square brackets indicate optional), if set, writes the .bat trajectory in double precision instead of single precision (float),
 which is recommended, since all calculation is done in double precision anyway. Only use single precision if you are short of harddisk storage.
@@ -216,8 +216,7 @@ Additionally, the program can perform a back-conversion from .bat to .xtc, which
 
 When the trajectory of a complex consisting of more than one molecule is converted, non-physical bonds (termed pseudo-bonds)
 are added in order for the complex to have a connected topology. This is done automatically. Also the algorithm guarantees
-that the chosen topology for every molecule in the complex is consistent with the topology which would be chosen if the molecules 
-would be treated separately, in isolation. 
+that the chosen topology for every molecule in the complex is consistent with the topology which would be chosen if the molecules would be treated separately, in isolation. 
 
 
 3.2) PARENT.x
@@ -278,24 +277,22 @@ The program is used in the following manner:
 
 3.4) get_PAR_info.x
 
-The program previous program (get_PAR_MIE.x) outputs all entropy/mutual information terms, but gives no information about
-which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_MIE.x is provided. 
+The previous program (get_PAR_MIE.x) outputs all entropy/mutual information terms, but gives no information about
+which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_info.x is provided. 
 
 The output starts with the bonds indexing. The columns are indicating:
-#bond #atom1 #atom2 
+\#bond \#atom1 \#atom2 
 
 In the same manner follow the angles:
-#angle #atom1 #atom2 #atom3
+\#angle \#atom1 \#atom2 \#atom3
 
 The dihedrals contain (additionally to #atom4) two special columns:
-#dihedral #atom1 #atom2 #atom3 #atom4    dihedral_type   phaseangle_of
+\#dihedral \#atom1 \#atom2 \#atom3 \#atom4    dihedral_type   phaseangle_of
 
-The column "dihedral_type" is set to 0 for a common dihedral, to -1 for an improper dihedral, and to 1 if the dihedral contains a 
-pseudo bond (see subsection 3.1. For every pseudo bond, there will be 3 pseudo dihedrals. The 2 atoms which all of them share
+The column "dihedral_type" is set to 0 for a common dihedral, to -1 for an improper dihedral, and to 1 if the dihedral contains a pseudo bond (see subsection 3.1. For every pseudo bond, there will be 3 pseudo dihedrals. The 2 atoms which all of them share
 constitute the pseudo bond.).
 
-The last column is set to -1 if the dihedral is not a phase angle (see subsection 3.1). Otherwise it will be set to the index of the dihedral to which
-it is relative to.
+The last column is set to -1 if the dihedral is not a phase angle (see subsection 3.1). Otherwise it will be set to the index of the dihedral to which it is relative to.
 
 The program is used in the following manner:
 
