@@ -299,7 +299,7 @@ The last column is set to -1 if the dihedral is not a phase angle (see subsectio
 
 The program is used in the following manner:
 
-./get_PAR_info.x input.par
+	./get_PAR_info.x input.par
 
 
 3.5) get_PAR_MIST.x
@@ -314,7 +314,7 @@ B. M. King, N. W. Silver, and B. Tidor. J. Phys. Chem. B 116: 2891 (2012).
 
 The program is used in the following manner:
 
-./get_PAR_MIST.x input.par output.txt
+	./get_PAR_MIST.x input.par output.txt
 
 Remember that you need to invoke it using MPI (see subsection 3.2 for further details).
 
