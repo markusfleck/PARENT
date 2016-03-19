@@ -325,11 +325,21 @@ The program is used in the following manner:
 
 Remember that you need to invoke it using MPI (see subsection 3.2 for further details).
 
+4) IO library
+
+The PARENT suite comprises a library for easily accessing its binary file formats. To use it, link with 
+
+	obj/io.o
+	
+and use
+
+	#include src/util/io/io.h
+	
+in your c++ source files.
 
 
 
-
-4) CONTACT INFORMATION
+5) CONTACT INFORMATION
 
 If you have any questions, feel free to contact: 
 
