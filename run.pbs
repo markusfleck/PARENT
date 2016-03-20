@@ -8,7 +8,7 @@ export MPI_NUM_PROCS=4
 export OMP_NUM_THREADS=16
 
 
-# Navigate to the current working directory and start to compile and run the program
+# Navigate to the current working directory and start to compile and run the programs
 cd $PBS_O_WORKDIR
 bash run.sh parameters
 
