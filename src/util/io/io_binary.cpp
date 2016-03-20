@@ -364,7 +364,7 @@ int read_BAT_frame(ifstream *infile,int precision, int nDihedrals, float *time, 
 
 int write_PAR_header(ofstream *outfile,int nDihedrals,int double_prec,int numFrames,vector< vector <int> > *dihedrals_top, vector <float>  *massvec, int bDens1D, int aDens1D, int dDens1D, int bDens, int aDens, int dDens, vector <string> *residues,vector <int> *residueNumbers,vector <string> *atomNames,vector <string> *belongsToMolecule) {
     int dummy=(*dihedrals_top).size();
-    int version=3;
+    int version=4;
     int fail=0;
     char dummystring[31];
 
