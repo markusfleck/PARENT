@@ -40,7 +40,7 @@ using namespace std;
 
 
 //to write the header of the binary .bat file
-int write_BAT_header(ofstream *outfile,int double_prec,int numframes,vector< vector <int> > *dihedrals_top, vector <float>  *massvec, vector <string> *residues,vector <int> *residueNumbers,vector <string> *atomNames,vector <string> *belongsToMolecule) {
+int write_BAT_header(ofstream *outfile,int double_prec,int numframes,vector< vector <int> > *dihedrals_top, vector <float>  *masses, vector <string> *residues,vector <int> *residueNumbers,vector <string> *atomNames,vector <string> *belongsToMolecule) {
     int dummy=(*dihedrals_top).size();
     int version=3;
     int fail=0;
@@ -95,7 +95,7 @@ int write_BAT_header(ofstream *outfile,int double_prec,int numframes,vector< vec
 
     }
     for(int i=0; i<dummy+3; i++) {
-        (*outfile).write((char*)&(*massvec)[i], sizeof(float)); //and write the whole massvector of the atoms in the system in single precision (float)
+        (*outfile).write((char*)&(*masses)[i], sizeof(float)); //and write the whole massestor of the atoms in the system in single precision (float)
         fail=fail | ((*outfile).rdstate() & std::ofstream::failbit);
     }
     return fail;
@@ -118,23 +118,6 @@ int read_BAT_header(ifstream *infile,int *double_prec,int *numFrames,vector< vec
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
     (*infile).read((char*)numFrames,sizeof(int)); //and an integer containing the number of frames
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-
-    if (version>=3) {
-        for(int i=0; i<nDihedrals+3; i++) { //for ever atom in the system
-            (*infile).read(dummystring, 8*sizeof(char));//read the name of the residue it belongs to
-            (*residues).push_back(dummystring);
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*residueNumbers).push_back(0);
-            (*infile).read((char*)&((*residueNumbers)[i]), sizeof(float));//read the number of the residue it belongs to
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*infile).read(dummystring, 8*sizeof(char));//read the name of the atom
-            (*atomNames).push_back(dummystring);
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*infile).read(dummystring, 31*sizeof(char));//read the molecule of the residue it belongs to
-            (*belongsToMolecule).push_back(dummystring);
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-        }
-    }
 
 
     //check if everything went okay
@@ -161,6 +144,29 @@ int read_BAT_header(ifstream *infile,int *double_prec,int *numFrames,vector< vec
         return 1;
     }
 
+    if (version>=3) {
+        for(int i=0; i<nDihedrals+3; i++) { //for ever atom in the system
+            (*infile).read(dummystring, 8*sizeof(char));//read the name of the residue it belongs to
+            (*residues).push_back(dummystring);
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*residueNumbers).push_back(0);
+            (*infile).read((char*)&((*residueNumbers)[i]), sizeof(float));//read the number of the residue it belongs to
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*infile).read(dummystring, 8*sizeof(char));//read the name of the atom
+            (*atomNames).push_back(dummystring);
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*infile).read(dummystring, 31*sizeof(char));//read the molecule of the residue it belongs to
+            (*belongsToMolecule).push_back(dummystring);
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+        }
+    }
+
+
+    //check if everything went okay
+    if(fail!=0) {
+        return fail;
+    }
+
 
     vector<int>dummyvec;
     dummyvec.push_back(0);
@@ -184,7 +190,7 @@ int read_BAT_header(ifstream *infile,int *double_prec,int *numFrames,vector< vec
         (*infile).read((char*)&((*dihedrals_top)[i][5]),sizeof(int));//and an integer containing the "parent"dihedral(for phaseangles, -1 if no "parent")
         fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
     }
-    for(int i=0; i<nDihedrals+3; i++) { //and read the whole massvector of the atoms in the system in single precision (float)
+    for(int i=0; i<nDihedrals+3; i++) { //and read the whole massestor of the atoms in the system in single precision (float)
         (*masses).push_back(0);
         (*infile).read((char*)&((*masses)[i]), sizeof(float));
         fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
@@ -362,7 +368,7 @@ int read_BAT_frame(ifstream *infile,int precision, int nDihedrals, float *time, 
 }
 
 
-int write_PAR_header(ofstream *outfile,int nDihedrals,int double_prec,int numFrames,vector< vector <int> > *dihedrals_top, vector <float>  *massvec, int bDens1D, int aDens1D, int dDens1D, int bDens, int aDens, int dDens, vector <string> *residues,vector <int> *residueNumbers,vector <string> *atomNames,vector <string> *belongsToMolecule) {
+int write_PAR_header(ofstream *outfile,int nDihedrals,int double_prec,int numFrames,vector< vector <int> > *dihedrals_top, vector <float>  *masses, int bDens1D, int aDens1D, int dDens1D, int bDens, int aDens, int dDens, vector <string> *residues,vector <int> *residueNumbers,vector <string> *atomNames,vector <string> *belongsToMolecule) {
     int dummy=(*dihedrals_top).size();
     int version=4;
     int fail=0;
@@ -429,7 +435,7 @@ int write_PAR_header(ofstream *outfile,int nDihedrals,int double_prec,int numFra
 
     }
     for(int i=0; i<dummy+3; i++) {
-        (*outfile).write((char*)&((*massvec)[i]), sizeof(float)); //then write the whole massvector of the atoms in the system in single precision (float)
+        (*outfile).write((char*)&((*masses)[i]), sizeof(float)); //then write the whole massestor of the atoms in the system in single precision (float)
         fail=fail | ((*outfile).rdstate() & std::ofstream::failbit);
     }
     return fail; //if anything failed return a 1, otherwise a 0
@@ -462,24 +468,6 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
     (*infile).read((char*)dDens,sizeof(int));
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-
-
-    if ((*version)>=3) {
-        for(int i=0; i<(*nDihedrals)+3; i++) { //for every atom in the system
-            (*infile).read(dummystring, 8*sizeof(char));//read the name of the residue it belongs to
-            (*residues).push_back(dummystring);
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*residueNumbers).push_back(0);//the number of the residue it belongs to
-            (*infile).read((char*)&((*residueNumbers)[i]), sizeof(float));
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*infile).read(dummystring, 8*sizeof(char));//the name of the atom
-            (*atomNames).push_back(dummystring);
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-            (*infile).read(dummystring, 31*sizeof(char));
-            (*belongsToMolecule).push_back(dummystring); //and the name of the molecule it belongs to
-            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-        }
-    }
 
 
     //check for errors
@@ -529,6 +517,31 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
         cerr<<"ERROR: FILE HEADER CORRUPTED. NUMBER BINS FOR DIHEDRALS IN 2D ("<<(*dDens)<<") < 1!"<<endl;
         return 1;
     }
+		
+		
+		
+		if ((*version)>=3) {
+        for(int i=0; i<(*nDihedrals)+3; i++) { //for every atom in the system
+            (*infile).read(dummystring, 8*sizeof(char));//read the name of the residue it belongs to
+            (*residues).push_back(dummystring);
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*residueNumbers).push_back(0);//the number of the residue it belongs to
+            (*infile).read((char*)&((*residueNumbers)[i]), sizeof(float));
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*infile).read(dummystring, 8*sizeof(char));//the name of the atom
+            (*atomNames).push_back(dummystring);
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+            (*infile).read(dummystring, 31*sizeof(char));
+            (*belongsToMolecule).push_back(dummystring); //and the name of the molecule it belongs to
+            fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
+        }
+    }
+		
+		
+		    //check for errors
+    if(fail!=0) {
+        return fail;
+    }
 
 
     vector<int>dummyvec;
@@ -567,7 +580,7 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
         (*infile).read((char*)&((*dihedrals_top)[i][4]),sizeof(int));// an integer containing the type of the dihedral(physical=0,pseudo=1,improper=-1)
         fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
         if(!(((*dihedrals_top)[i][4]==1)||((*dihedrals_top)[i][4]==0)||((*dihedrals_top)[i][4]==-1))) {
-            cerr<<"ERROR: FILE HEADER CORRUPTED. DIHEDRAL NEITHER 0, 1 NOR -1 !"<<endl;
+            cerr<<"ERROR: FILE HEADER CORRUPTED. DIHEDRAL TYPE NEITHER 0, 1 NOR -1 !"<<endl;
             return 1;
         }
         (*infile).read((char*)&((*dihedrals_top)[i][5]),sizeof(int));// and an integer containing the "parent" dihedral(for phaseangles, -1 if no "parent")
@@ -577,13 +590,13 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
             return 1;
         }
 
-        if((*version==1)) {
+        if((*version==1)&&((*dihedrals_top)[i][5]!=-1)) {
             (*dihedrals_top)[i][5]++; //for backwards compatibility
         }
     }
     for(int i=0; i<(*nDihedrals)+3; i++) {
         (*masses).push_back(0);
-        (*infile).read((char*)&((*masses)[i]), sizeof(float));//then read the whole massvector of the atoms in the system in single precision (float)
+        (*infile).read((char*)&((*masses)[i]), sizeof(float));//then read the whole massestor of the atoms in the system in single precision (float)
         fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
     }
     return fail; //if anything failed return a 1, otherwise a 0
@@ -658,6 +671,7 @@ int read_PAR_body(ifstream* par_file, int nDihedrals,double** bondsEntropy1D, do
     fail=fail | ((*par_file).rdstate() & std::ifstream::failbit);
     return fail;
 }
+
 
 
 
