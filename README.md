@@ -33,6 +33,7 @@ UPDATES:
 feed the according .par to get_values_from_PAR.x .
 - get_PAR_info.x has been renamed to get_topology_from_PAR.x
 - classes are now separated in .h and .cpp files
+- command line parameters have been improved to better comply with GNU/Linux standards
 - While this snapshot is highly assumed to be stable, 
 
 ***********************************************************************************************************************************************
