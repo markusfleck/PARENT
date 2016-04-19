@@ -27,10 +27,10 @@ results generated using this program or modifications of it.
 
 UPDATES:
 
-- An EntropyMatrix class has been created to support handling .par file easier 
-- get_PAR_MIE.x has been rewritten to demonstrate useage of the EntropyMatrix class and ahs been renamed to get_values_from_PAR.x
+- An EntropyMatrix class has been created to support handling .par files easier 
+- get_PAR_MIE.x has been rewritten to demonstrate usage of the EntropyMatrix class and has been renamed to get_values_from_PAR.x
 - get_PAR_MIST.x now produces a .par file, which is fully compatible with a .par from PARENT.x . Thus, to extract MIST values to text format,
-feed the according .par to get_values_from_PAR.x .
+feed the according .par file to get_values_from_PAR.x .
 - get_PAR_info.x has been renamed to get_topology_from_PAR.x
 - classes are now separated in .h and .cpp files
 - command line parameters have been improved to better comply with GNU/Linux standards
