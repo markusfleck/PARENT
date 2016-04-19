@@ -42,7 +42,6 @@
 std::string strip_line(std::string line);
 std::string delete_char(std::string line,char del);
 std::string strip_blanks(std::string line);
-int read_ndx_file(std::ifstream *ndxfile, std::vector <int> *group1, std::vector <int> *group2, std::string name1, std::string name2);
 
 #endif
 
