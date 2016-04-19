@@ -66,10 +66,6 @@ int read_PAR_body(std::ifstream* par_file, int nDihedrals,double** bondsEntropy1
 
 
 
-int write_CLT_file(std::ofstream *clt_file,int calcBonds, int calcAngles, int calcDihedrals, std::vector <std::string> *residuesRes,std::vector <int> *residueNumbersRes,std::vector <std::string> *belongsToMoleculeRes, std::vector <int> *nBonds, std::vector <int> *nAngles, std::vector <int> *nDihedrals, double* mutualArray);
-int read_CLT_file(std::ifstream *clt_file, int *version, int* calcBonds, int* calcAngles, int* calcDihedrals, std::vector <std::string> *residues, std::vector <int> *residueNumbers, std::vector <std::string> *belongsToMolecule, std::vector <int> *nBonds, std::vector <int> *nAngles, std::vector <int> *nDihedrals, double** mutualArray) ;
-
-
 class EntropyMatrix {
     public:
       EntropyMatrix(char const * infileInput);
