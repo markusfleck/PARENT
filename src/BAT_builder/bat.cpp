@@ -30,7 +30,17 @@
 
 
 
-#include "bat.h"
+#include "topology.h"
+#include "BAT_topology.h"
+#include "BAT_trajectory.h"
+#include "../util/util.h"
+
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+
+
+using namespace std;
 
 int main(int argc, char* argv[])
 {
@@ -73,12 +83,16 @@ int main(int argc, char* argv[])
     char *ptr,*type1,*type2,*type3;
 
 
-    if(argc==5) { //conversion from Cartesians to BAT in single precision
-
-        string tmp1(argv[1]);
-        string tmp2(argv[2]);
-        string tmp3(argv[3]);
-        vector <string> backboneAtomNames;
+    if(argc==9){ //conversion from Cartesians to BAT in double precision
+					if(!cmdOptionExists(argv, argv+argc, "-t")||!cmdOptionExists(argv, argv+argc, "-x")||!cmdOptionExists(argv, argv+argc, "-o")||!cmdOptionExists(argv, argv+argc, "-bb")){
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
+						return 1;
+					}
+        
+				std::string tmp1(getCmdOption(argv, argv+argc, "-t"));
+        std::string tmp2(getCmdOption(argv, argv+argc, "-x"));
+        std::string tmp3(getCmdOption(argv, argv+argc, "-o"));
+        vector <std::string> backboneAtomNames;
 
         //extract the filename extansions from the command line arguments
         ptr = strtok((char*)tmp1.c_str(), delimiter);
@@ -99,41 +113,41 @@ int main(int argc, char* argv[])
 
         //check if command line arguments were supplied correctly, else put out help and quit
         if(((strcmp(type1,"top"))||(strcmp(type2,"xtc"))||(strcmp(type3,"bat")))) {
-            cerr<<"USAGE: "<<argv[0]<<" input.top input.xtc output.bat \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [double_precision]\nOR "<<argv[0]<<" input.bat output.xtc\n";
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
             return 1;
         }
 
         //Read in the requested names of backbone atoms
-        ptr = strtok (argv[4]," ");
+        ptr = strtok (getCmdOption(argv, argv+argc, "-bb")," ");
         while (ptr != NULL)
         {
-            backboneAtomNames.push_back(string(ptr));
+            backboneAtomNames.push_back(std::string(ptr));
             ptr = strtok (NULL, " ");
         }
 
-
-
-        //Read the topology file and build a table for the molecules bonds as well as a list of backbone atoms
+				//Read the topology file and build a table for the molecules bonds as well as a list of backbone atoms
         cout<<"Reading topology."<<endl;
-        Topology proteins(string(argv[1]).c_str(), backboneAtomNames);
+        Topology proteins(std::string(getCmdOption(argv, argv+argc, "-t")).c_str(), backboneAtomNames);
 
         //Build the BAT Topology using the molecules bonds (and the backbone atoms to make use of phase angles)
         cout<<"Building BAT topology."<<endl;
         BAT_Topology bat(&proteins.bonds_table,&proteins.backbone,&proteins.roots);
 
-        //Use the list of dihedrals and the original trajectory file to build the BAT binary trajectory in single precision (masses are included in the .bat file since they might come in handy at a later point). Also add information about the atoms.
+        //Use the list of dihedrals and the original trajectory file to build the BAT binary trajectory in double precision (masses are included in the .bat file since they might come in handy at a later point). Also add information about the atoms.
         cout<<"Writing .bat trajectory."<<endl;
-        BAT_Trajectory trj(string(argv[2]).c_str(),string(argv[3]).c_str(), &bat.dihedrals, &proteins.masses,&proteins.residues,&proteins.residueNumbers,&proteins.atomNames,&proteins.belongsToMolecule);
-
-
-    }
-    else if(argc==6) { //conversion from Cartesians to BAT in double precision
-
-        string tmp1(argv[1]);
-        string tmp2(argv[2]);
-        string tmp3(argv[3]);
-        string tmp4(argv[5]);
-        vector <string> backboneAtomNames;
+        BAT_Trajectory trj(std::string(getCmdOption(argv, argv+argc, "-x")).c_str(),std::string(getCmdOption(argv, argv+argc, "-o")).c_str(), &bat.dihedrals, &proteins.masses,&proteins.residues,&proteins.residueNumbers,&proteins.atomNames,&proteins.belongsToMolecule);
+		
+		}
+    else if(argc==10) { //conversion from Cartesians to BAT in single precision
+					if(!cmdOptionExists(argv, argv+argc, "-t")||!cmdOptionExists(argv, argv+argc, "-x")||!cmdOptionExists(argv, argv+argc, "-o")||!cmdOptionExists(argv, argv+argc, "-bb")||!cmdOptionExists(argv, argv+argc, "--single_precision")){
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
+						return 1;
+					}
+					
+				std::string tmp1(getCmdOption(argv, argv+argc, "-t"));
+        std::string tmp2(getCmdOption(argv, argv+argc, "-x"));
+        std::string tmp3(getCmdOption(argv, argv+argc, "-o"));
+        vector <std::string> backboneAtomNames;
 
         //extract the filename extansions from the command line arguments
         ptr = strtok((char*)tmp1.c_str(), delimiter);
@@ -153,37 +167,42 @@ int main(int argc, char* argv[])
         }
 
         //check if command line arguments were supplied correctly, else put out help and quit
-        if(((strcmp(type1,"top"))||(strcmp(type2,"xtc"))||(strcmp(type3,"bat"))||(strcmp(tmp4.c_str(),"double_precision")))) {
-            cerr<<"USAGE: "<<argv[0]<<" input.top input.xtc output.bat \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [double_precision]\nOR "<<argv[0]<<" input.bat output.xtc\n";
+        if(((strcmp(type1,"top"))||(strcmp(type2,"xtc"))||(strcmp(type3,"bat")))) {
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
             return 1;
         }
 
         //Read in the requested names of backbone atoms
-        ptr = strtok (argv[4]," ");
+        ptr = strtok (getCmdOption(argv, argv+argc, "-bb")," ");
         while (ptr != NULL)
         {
-            backboneAtomNames.push_back(string(ptr));
+            backboneAtomNames.push_back(std::string(ptr));
             ptr = strtok (NULL, " ");
         }
 
 
         //Read the topology file and build a table for the molecules bonds as well as a list of backbone atoms
         cout<<"Reading topology."<<endl;
-        Topology proteins(string(argv[1]).c_str(), backboneAtomNames);
+        Topology proteins(std::string(getCmdOption(argv, argv+argc, "-t")).c_str(), backboneAtomNames);
 
         //Build the BAT Topology using the molecules bonds (and the backbone atoms to make use of phase angles)
         cout<<"Building BAT topology."<<endl;
         BAT_Topology bat(&proteins.bonds_table,&proteins.backbone,&proteins.roots);
 
-        //Use the list of dihedrals and the original trajectory file to build the BAT binary trajectory in double precision (masses are included in the .bat file since they might come in handy at a later point). Also add information about the atoms.
+        //Use the list of dihedrals and the original trajectory file to build the BAT binary trajectory in single precision (masses are included in the .bat file since they might come in handy at a later point). Also add information about the atoms.
         cout<<"Writing .bat trajectory."<<endl;
-        BAT_Trajectory trj(string(argv[2]).c_str(),string(argv[3]).c_str(), &bat.dihedrals,&proteins.masses,&proteins.residues,&proteins.residueNumbers,&proteins.atomNames,&proteins.belongsToMolecule,1);
+        BAT_Trajectory trj(std::string(getCmdOption(argv, argv+argc, "-x")).c_str(),std::string(getCmdOption(argv, argv+argc, "-o")).c_str(), &bat.dihedrals,&proteins.masses,&proteins.residues,&proteins.residueNumbers,&proteins.atomNames,&proteins.belongsToMolecule,0);
 
     }
-    else  if (argc==3) { // conversion from BAT to Cartesians
+    else  if (argc==5) { // conversion from BAT to Cartesians
+					if(!cmdOptionExists(argv, argv+argc, "-b")||!cmdOptionExists(argv, argv+argc, "-o")){
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
+						return 1;
+					}
+					
+				std::string tmp1(getCmdOption(argv, argv+argc, "-b"));
+        std::string tmp2(getCmdOption(argv, argv+argc, "-o"));
 
-        string tmp1(argv[1]);
-        string tmp2(argv[2]);
 
         //extract the filename extansions from the command line arguments
         ptr = strtok((char*)tmp1.c_str(), delimiter);
@@ -199,18 +218,18 @@ int main(int argc, char* argv[])
 
         //check if command line arguments were supplied correctly, else put out help and quit
         if(((strcmp(type1,"bat"))||(strcmp(type2,"xtc")))) {
-            cerr<<"USAGE: "<<argv[0]<<" input.top input.xtc output.bat \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [double_precision]\nOR "<<argv[0]<<" input.bat output.xtc\n";
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
             return 1;
         }
 
 
         //do the conversion
         cout<<"Converting .bat to .xtc."<<endl;
-        BAT_Trajectory trj(string(argv[1]).c_str(),string(argv[2]).c_str());
+        BAT_Trajectory trj(std::string(getCmdOption(argv, argv+argc, "-b")).c_str(),std::string(getCmdOption(argv, argv+argc, "-o")).c_str());
 
     }
     else {
-        cerr<<"USAGE: "<<argv[0]<<" input.top input.xtc output.bat \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [double_precision]\nOR "<<argv[0]<<" input.bat output.xtc\n";
+            cerr<<"USAGE: "<<argv[0]<<" -t input.top -x input.xtc -o output.bat -bb \"BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ...\" [--single_precision]\nOR "<<argv[0]<<" -b input.bat -o output.xtc\n";
         return 1;
     }
 

@@ -30,17 +30,22 @@
 
 
 
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <math.h>
+
 #include "../util/io/io.h"
+#include "BAT_trajectory.h"
+
 
 
 
 using namespace std;
 
-class BAT_Trajectory {
 
-public:
     //constructor for the .xtc to .bat conversion
-    BAT_Trajectory(string trjFileI,string trjFileO, vector< vector <int> > *dihedralsIn, vector <float> *massvec_in, vector <string> *residues_in,vector <int> *residueNumbers_in,vector <string> *atomNames_in,vector <string> *belongsToMolecule_in, int double_prec_in=0) {
+    BAT_Trajectory::BAT_Trajectory(string trjFileI,string trjFileO, vector< vector <int> > *dihedralsIn, vector <float> *massvec_in, vector <string> *residues_in,vector <int> *residueNumbers_in,vector <string> *atomNames_in,vector <string> *belongsToMolecule_in, int double_prec_in) {
 
         //definition, allcation etc
         pi=acos(-1); //define pi
@@ -63,7 +68,7 @@ public:
         convert_xtc_to_BAT(); //start the procedure
     }
     //constructor for the .bat to .xtc conversion
-    BAT_Trajectory(string trjFileI,string trjFileO) {
+    BAT_Trajectory::BAT_Trajectory(string trjFileI,string trjFileO) {
         pi=acos(-1); //define pi
         trjFileIn=trjFileI; //name of the input file
         trjFileOut=trjFileO; //name of the output file
@@ -71,42 +76,11 @@ public:
         convert_BAT_to_xtc(); //start the procedure
     }
 
-    int double_prec;
-    vector< vector <int> > dihedrals_top;
-    vector <float> massvec;
-    vector <string> residues;
-    vector <int> residueNumbers;
-    vector <string> atomNames;
-    vector <string> belongsToMolecule;
-    string trjFileIn,trjFileOut;
-    rvec *x;
-
-
-    double root_origin_cartesian[3];
-    double root_origin_phi;
-    double root_origin_theta;
-    double root_origin_dihedral;
-
-    double rootbond[2];
-    double rootangle;
-
-    double *bonds;
-    double *angles;
-    double *dihedrals;
-    double *bondsFull,*anglesFull;
-    float *masses;
-
-    int step;
-    float time,prec;
-    matrix box;
-
-    double pi;
-    int numframes;
+    
 
 
 
-
-    int convert_xtc_to_BAT() {
+    int BAT_Trajectory::convert_xtc_to_BAT() {
         XDRFILE *xdi;
         int natoms;
         read_xtc_natoms((char*)trjFileIn.c_str(),&natoms);//check the number of atoms in the .xtc file (function from XTC Library (GROMACS) ))
@@ -174,7 +148,7 @@ public:
     }
 
 
-    int convert_BAT_to_xtc() {
+    int BAT_Trajectory::convert_BAT_to_xtc() {
 
         XDRFILE *xdo;
         ifstream infile(trjFileIn.c_str(), ios::binary | ios::in); //open the binary .bat input file
@@ -230,7 +204,7 @@ public:
         return 0;
     }
 
-    void shift_dihedrals_0_2pi_range() {
+    void BAT_Trajectory::shift_dihedrals_0_2pi_range() {
         //shift the range of the dihedrals from [-pi,pi] to [0,2pi]
         for(unsigned int i=0; i<dihedrals_top.size(); i++) {
             dihedrals[i]=dihedrals[i]+2*pi-int((dihedrals[i]+2*pi)/(2*pi))*2*pi;
@@ -240,7 +214,7 @@ public:
 
 
 
-    void convert_to_BAT() {
+    void BAT_Trajectory::convert_to_BAT() {
         double b1vec[3];
         double b2vec[3];
         double b3vec[3];
@@ -324,7 +298,7 @@ public:
     }
 
     //a phaseangle is formed by its difference to its "parent" dihedral
-    void convert_dihedrals_to_phaseangles() {
+    void BAT_Trajectory::convert_dihedrals_to_phaseangles() {
         for(unsigned int i=0; i<dihedrals_top.size(); i++) {//for all dihedrals
             if(dihedrals_top[i][5]!=-1) { //dihedrals_top[i][5] indicates the "parent" dihedral of dihedral[i], so if the dihedral has a "parent" dihedral
                 dihedrals[i]-=dihedrals[dihedrals_top[i][5]-1];//subtract from dihedral[i] the value of its "parent" dihedral
@@ -332,7 +306,7 @@ public:
         }
     }
 
-    void convert_to_Cartesian() {
+    void BAT_Trajectory::convert_to_Cartesian() {
 
         double n[3];
         double bc[3];
@@ -416,7 +390,7 @@ public:
     }
 
     //to convert all phaseangles back to dihedrals
-    void convert_phaseangles_to_dihedrals() {
+    void BAT_Trajectory::convert_phaseangles_to_dihedrals() {
         for(unsigned int i=0; i<dihedrals_top.size(); i++) {//for all dihedrals
             if(dihedrals_top[i][5]!=-1) {//check if this dihedral was implemented as a phase angle
                 dihedrals[i]+=dihedrals[dihedrals_top[i][5]-1]; //if so, add the value of the "parent" dihedral back up
@@ -424,7 +398,7 @@ public:
         }
     }
 
-};
+
 
 
 

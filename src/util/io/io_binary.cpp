@@ -1,5 +1,5 @@
 //    The binary IO library for the PARENT program suite
-//    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
+//    Copyright (C) 2016  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License  version 3
@@ -30,13 +30,20 @@
 
 
 
-#pragma pack(1)
+
+
+#include <stdlib.h>
+#include <sstream>
 
 
 
 #include "io_binary.h"
 
+#include "EntropyMatrix.cpp"
+
 using namespace std;
+
+#pragma pack(1)
 
 
 //to write the header of the binary .bat file
@@ -376,7 +383,7 @@ int write_PAR_header(ofstream *outfile,int nDihedrals,int double_prec,int numFra
 
     (*outfile).write((char*)&version, sizeof(int)); //first write the .par version number as an integer
     fail=fail | ((*outfile).rdstate() & std::ofstream::failbit);
-    (*outfile).write((char*)&double_prec, sizeof(int)); //then write an integer declaring if the trajectory was stored in double precision
+    (*outfile).write((char*)&double_prec, sizeof(int)); //then write an integer declaring if the trajectory was stored in double precision (-1 means unknown)
     fail=fail | ((*outfile).rdstate() & std::ofstream::failbit);
     (*outfile).write((char*)&dummy, sizeof(int)); //write an integer containing the number of dihedrals
     fail=fail | ((*outfile).rdstate() & std::ofstream::failbit);
@@ -450,7 +457,7 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
 
     (*infile).read((char*)version, sizeof(int)); //first read the .par version number as an integer
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
-    (*infile).read((char*)double_prec, sizeof(int));//then read an integer declaring if the trajectory was stored in double precision
+    (*infile).read((char*)double_prec, sizeof(int));//then read an integer declaring if the trajectory was stored in double precision (-1 means unknown)
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
     (*infile).read((char*)nDihedrals,sizeof(int));//read an integer containing the number of dihedrals
     fail=fail | ((*infile).rdstate() & std::ifstream::failbit);
@@ -478,8 +485,8 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
         cerr<<"ERROR: FILE HEADER CORRUPTED. VERSION NUMBER ("<<(*version)<<") < 0!"<<endl;
         return 1;
     }
-    if((*double_prec!=0)&&(*double_prec!=1)) {
-        cerr<<"ERROR: FILE HEADER CORRUPTED. DOUBLE PRECISION VALUE ("<<(*double_prec)<<") NEITHER 0 NOR 1!"<<endl;
+    if((*double_prec!=0)&&(*double_prec!=1)&&(*double_prec!=-1)) {
+        cerr<<"ERROR: FILE HEADER CORRUPTED. DOUBLE PRECISION VALUE ("<<(*double_prec)<<") NEITHER 0, 1 NOR -1!"<<endl;
         return 1;
     }
     if((*nDihedrals)>19997) {
@@ -489,8 +496,8 @@ int read_PAR_header(ifstream *infile,int *nDihedrals,int *double_prec,int *numFr
         cerr<<"ERROR: FILE HEADER CORRUPTED. NUMBER OF DIHEDRALS ("<<(*nDihedrals)<<") < 0!"<<endl;
         return 1;
     }
-    if((*numFrames)<1) {
-        cerr<<"ERROR: FILE HEADER CORRUPTED. NUMBER OF FRAMES ("<<(*numFrames)<<") < 1!"<<endl;
+    if((*numFrames)<0) {
+        cerr<<"ERROR: FILE HEADER CORRUPTED. NUMBER OF FRAMES ("<<(*numFrames)<<") < 0!"<<endl;
         return 1;
     }
     if((*bDens1D)<1) {
@@ -673,14 +680,98 @@ int read_PAR_body(ifstream* par_file, int nDihedrals,double** bondsEntropy1D, do
 }
 
 
+int write_CLT_file(ofstream *clt_file,int calcBonds, int calcAngles, int calcDihedrals, vector <string> *residuesRes,vector <int> *residueNumbersRes,vector <string> *belongsToMoleculeRes, vector <int> *nBonds, vector <int> *nAngles, vector <int> *nDihedrals, double* mutualArray){
+        int fail=0;
+        int version=1;
+
+        char dummystring[31];
+        int nGroups=(*residuesRes).size();
+        
+
+        (*clt_file).write((char*)&version, sizeof(int)); //write the version number
+        fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        (*clt_file).write((char*)&calcBonds, sizeof(int)); //write if bonds were taken into account
+        fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        (*clt_file).write((char*)&calcAngles, sizeof(int));//write if angles were taken into account
+        fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        (*clt_file).write((char*)&calcDihedrals, sizeof(int));//write if dihedrals were taken into account
+        fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        (*clt_file).write((char*)&nGroups, sizeof(int)); //write the number of residues
+        fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        for(int i=0;i<nGroups;i++){ //then for every residue
+          for(int j=0;j<8;j++){dummystring[j]='\0';}
+          sprintf(dummystring, "%.7s", ((*residuesRes)[i]).c_str());
+          (*clt_file).write((char*)dummystring, 8*sizeof(char)); //write the name of the residue
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+          (*clt_file).write((char*)&((*residueNumbersRes)[i]), sizeof(int)); // the number of the residue
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+          for(int j=0;j<31;j++){dummystring[j]='\0';}
+          sprintf(dummystring, "%.30s", ((*belongsToMoleculeRes)[i]).c_str());
+          (*clt_file).write((char*)dummystring, 31*sizeof(char)); // the name of the molecule it belongs to
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+          (*clt_file).write((char*)(&((*nBonds)[i])), sizeof(int)); //the number of bonds the residue contains
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+          (*clt_file).write((char*)(&((*nAngles)[i])), sizeof(int));//the number of angles the residue contains
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+          (*clt_file).write((char*)(&((*nDihedrals)[i])), sizeof(int));//the number of dihedrals the residue contains
+          fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+        }
+        int counter=0;
+        for(int i=0;i<nGroups-1;i++){//finally write the mutual information matrix in residue representation
+          for(int j=i+1;j<nGroups;j++){
+            (*clt_file).write((char*)&(mutualArray[counter]), sizeof(double));
+            fail=fail | ((*clt_file).rdstate() & std::ofstream::failbit);
+            counter++;
+          }
+        }
+return fail;        
+}
 
 
 
+int read_CLT_file(ifstream *clt_file, int *version, int* calcBonds, int* calcAngles, int* calcDihedrals, vector <string> *residues, vector <int> *residueNumbers, vector <string> *belongsToMolecule, vector <int> *nBonds, vector <int> *nAngles, vector <int> *nDihedrals, double** mutualArray) {
+    int fail=0;
+    int nGroups;
+    char dummystring[31];
+        (*clt_file).read((char*)version, sizeof(int));//see write_CLT_file above
+        fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+        (*clt_file).read((char*)calcBonds, sizeof(int));
+        fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+        (*clt_file).read((char*)calcAngles, sizeof(int));
+        fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+        (*clt_file).read((char*)calcDihedrals, sizeof(int));
+        fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+        (*clt_file).read((char*)&nGroups, sizeof(int));
+        fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+        for(int i=0;i<nGroups;i++){
+          (*clt_file).read((char*)dummystring, 8*sizeof(char));
+          (*residues).push_back(dummystring);
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+          (*residueNumbers).push_back(0);
+          (*clt_file).read((char*)&((*residueNumbers)[i]), sizeof(int));
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+          (*clt_file).read((char*)dummystring, 31*sizeof(char));
+          (*belongsToMolecule).push_back(dummystring);
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+          (*nBonds).push_back(0);
+          (*clt_file).read((char*)&((*nBonds)[i]), sizeof(int));
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+          (*nAngles).push_back(0);
+          (*clt_file).read((char*)&((*nAngles)[i]), sizeof(int));
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+          (*nDihedrals).push_back(0);
+          (*clt_file).read((char*)&((*nDihedrals)[i]), sizeof(int));
+          fail=fail | ((*clt_file).rdstate() & std::ifstream::failbit);
+
+        }
+        (*mutualArray)=(double*)malloc(nGroups*(nGroups-1)/2*sizeof(double));
+        (*clt_file).read((char*)&((*mutualArray)[0]), nGroups*(nGroups-1)/2*sizeof(double));
+return fail;
+}
 
 
 
-
-
+#pragma pack(0)
 
 
 

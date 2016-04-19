@@ -26,20 +26,23 @@
 
 
 
-
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cstdlib>
+#include <string>
+#include <cstring>
 
 
 
 #include "../util/io/io.h"
-
+#include "topology.h"
 
 
 using namespace std;
 
-class Topology {
-
-public:
-    Topology(string topfileIN,vector <string> backboneAtomNamesIN) {
+Topology::Topology(std::string topfileIN,vector <std::string> backboneAtomNamesIN) {
         current=-1;
         newclustflag=0;
         newclustmassflag=0;
@@ -53,41 +56,11 @@ public:
 
         //start the topology building
         read_topology();
+}
 
-    }
+Topology::~Topology() {}
 
-    ~Topology() {
-
-    }
-
-    vector< vector<int> > moleculetypes;  //contains a list of the atoms in each moleculetype
-    vector< vector<int> > molecules; //contains a list of atoms for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector< vector<int> > angles; //contains a list of angles for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector< vector< vector <int> > > bonds_table; //contains a list of all bonds in the system with proper offset, with bonds_table[#atom-1][#bond-1][0] the bonded atom and bonds_table[atom-1][#bond-1][1] the type of the bond (0==physical, 1==pseudo)
-    vector< vector< vector <int> > > moleculetypebonds; //contains a list  of all bonds for every moleculetype
-    vector< vector< vector <int> > > bonds;  //contains a list of atoms for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector<string> moleculetypenames;  //names of the moleculetypes
-    vector<string> moleculenames; //contains a full list of molecule names of the system as defined in the [ molecules ] section (water 1000 => water, water, water.......)
-    vector< vector <string> > moleculetypeResidues; //contains the name of the residue for every moleculetype and every atom
-    vector <string> residues; //contains the name of the residue for every atom in the system
-    vector< vector <int> > moleculetypeResidueNumbers; //contains the name of the residue number for every moleculetype and every atom
-    vector <int> residueNumbers; //contains the number of the residue for every atom in the system
-    vector< vector <string> > moleculetypeAtomNames; //contains the name of the atom for every moleculetype and every atom
-    vector <string> atomNames; //contains the name of every atom in the system
-    vector <string> belongsToMolecule; //the name of the molecule each atom belongs to
-    vector< vector<float> >  moleculetypemasses; //masses for each moleculetype
-    vector< vector<int> >  moleculetypebackbone; //backboneatoms for each moleculetype
-    vector<float> masses; //diagonal of the mass matrix of the system
-    vector <int> backbone; //backbone atoms in the system
-    vector <string> backboneAtomNames; //names of the atomtypes of the backbone for building phase angles from dihedrals, which is done in BAT_trajectory.cpp
-    vector< vector <int> > roots; //root atoms for all molecules in the system. root atoms need to be connected root[0] to root[1] and root[1] to root[2]. root[0] needs to be terminal, root[1] needs to be connected only to root[1] and terminal atoms. root[2] needs to be connected to non-terminal atoms.
-
-    long int current;
-    long int total_atoms;
-    unsigned short int newclustflag,newclustmassflag,newclustatomflag,newclustbackboneflag;
-    string top_dir, top_file;
-
-    unsigned short int add_bond(int atom1, int atom2) {
+unsigned short int Topology::add_bond(int atom1, int atom2) {
         //for a new [ moleculetype ], fill in the (preallocated) first 2 atoms to the current "moleculetypes" vector and the (preallocated) first bond to the current "moleculetypebonds" vector
         if(newclustflag==1) {
             moleculetypes[current][0]=atom1;
@@ -126,11 +99,11 @@ public:
             }
         }
         return 0;
-    }
+}
 
 
 
-    unsigned short int add_mass(float mass) {
+    unsigned short int Topology::add_mass(float mass) {
         //for a new [ moleculetype ], create a new massvector filled with the first atommass and add it to the "moleculetypemasses" vector
         if(newclustmassflag==1) {
             vector<float> tmpvec;
@@ -146,12 +119,12 @@ public:
     }
 
 
-    unsigned short int add_atom(string resname, int resnumber, string atomname) {
+    unsigned short int Topology::add_atom(std::string resname, int resnumber, std::string atomname) {
         //for a new [ moleculetype ], create new vectors filled with the first values and add them to the moleculetype vectors
         if(newclustatomflag==1) {
-            vector<string> tmpvec1;
+            vector<std::string> tmpvec1;
             vector<int> tmpvec2;
-            vector<string> tmpvec3;
+            vector<std::string> tmpvec3;
             tmpvec1.push_back(resname);
             tmpvec2.push_back(resnumber);
             tmpvec3.push_back(atomname);
@@ -171,7 +144,7 @@ public:
 
 
 
-    unsigned short int add_backbone(int atom) {
+    unsigned short int Topology::add_backbone(int atom) {
         //for a new [ moleculetype ], fill in the (preallocated) atom to the current "moleculetypebackbone" vector
         if(newclustbackboneflag==1) {
             moleculetypebackbone[current][0]=atom;
@@ -186,7 +159,7 @@ public:
 
 
 
-    void new_moleculetype(string mol) {
+    void Topology::new_moleculetype(std::string mol) {
 
         //set up the necessary flags and prolong the vectors (initialized with dummy values) for taking up a new molecule. Also increase the "current" counter;
         moleculetypenames.push_back(mol);
@@ -212,7 +185,7 @@ public:
 
 
 
-    int sort() {
+    int Topology::sort() {
         int offset=0;
         unsigned short int found=0;
         vector<int> clusterout;
@@ -265,12 +238,12 @@ public:
 
 
 
-    string get_dir_file(string file) {
+    std::string Topology::get_dir_file(std::string file) {
         //returns the directory in a path to a file
         size_t found = file.find('/');
-        if (found!=string::npos) {
+        if (found!=std::string::npos) {
             size_t found_old;
-            while(found!=string::npos) {
+            while(found!=std::string::npos) {
                 found_old=found;
                 found = file.find('/',found+1);
             }
@@ -278,13 +251,13 @@ public:
             return file;
         }
         else {
-            return string("./");
+            return std::string("./");
         }
     }
 
 
 
-    unsigned short int check_comment(string line) {
+    unsigned short int Topology::check_comment(std::string line) {
         //search for the first non-blank character in the line, if it is ";" return 1, otherwise return 0. If all characters are blanks, return 2.
         for(unsigned int i=0; i<line.length(); i++) {
             if(line[i]!=' ') {
@@ -301,8 +274,8 @@ public:
 
 
 
-    int preprocess(string infile,stringstream* myVirtualOFile) {
-        string line,tmpstr="",tmpstr2="",mytop_dir=get_dir_file(infile);
+    int Topology::preprocess(std::string infile,std::stringstream* myVirtualOFile) {
+        std::string line,tmpstr="",tmpstr2="",mytop_dir=get_dir_file(infile);
         char c1[1000],c2[1000];
         int found;
 
@@ -327,12 +300,12 @@ public:
             sscanf (line.c_str(),"%s %s",c1,c2);
 
             //check if the line is an include directive
-            if(string(c1)=="#include") {
+            if(std::string(c1)=="#include") {
                 found=0;
 
                 //remove the quotation marks and check if the file is present in the same directory as the topology file
                 tmpstr=mytop_dir;
-                tmpstr2=string(c2);
+                tmpstr2=std::string(c2);
                 tmpstr2.erase(tmpstr2.begin());
                 tmpstr2.erase(tmpstr2.end()-1);
                 tmpstr+=tmpstr2;
@@ -361,7 +334,7 @@ public:
                     //if the file wasn't found issue a warning
                     if(check_comment(line)==0) {
                         (*myVirtualOFile)<<line<<endl;
-                        cerr<<"WARNING FROM PREPROCESSOR: file "<<tmpstr2<<"   "<<(found==1 ? " found ":string(" NOT FOUND locally or at ")+tmpstr)<<". If the file does not contain any bond-structure information of your molecule(s), this should be fine.\n";
+                        cerr<<"WARNING FROM PREPROCESSOR: file "<<tmpstr2<<"   "<<(found==1 ? " found ":std::string(" NOT FOUND locally or at ")+tmpstr)<<". If the file does not contain any bond-structure information of your molecule(s), this should be fine.\n";
                     }
                 }
 
@@ -380,7 +353,7 @@ public:
 
 
 
-    int read_topology() {
+    int Topology::read_topology() {
 
         //set all [ section ] flags to false;
         unsigned short int atomsflag=0;
@@ -400,16 +373,16 @@ public:
 
 
         //preprocess the topology file to write a virtual file myVirtualFile
-        stringstream myVirtualFile(string(""));
+        stringstream myVirtualFile(std::string(""));
         preprocess(top_file,&myVirtualFile);
-        string line, line_in;
+        std::string line, line_in;
 
         while ( getline(myVirtualFile,line_in) ) {
             line=strip_line(line_in);
             if(moleculetypeflag==1&&line[0]!='['&&line[0]!='#') {
                 if(check_comment(line)==0) {  //if a new [ moleculetype ] section is encountered,
                     sscanf (line.c_str(),"%s %d",c1,&n2);
-                    new_moleculetype(string(c1));//create that moleculetype
+                    new_moleculetype(std::string(c1));//create that moleculetype
                     //and check if the previous [ moleculetype ] section had exactly one [ atoms ] and [ bonds ] section
                     if(hasAtoms==0) {
                         cerr<<"ERROR: NO \"[ atoms ]\" SECTION FOUND FOR MOLECULETYPE "<<moleculetypenames[current-1]<<" IN (PREPROCESSED) TOPOLOGY FILE \""<<top_file<<"\"!\n";
@@ -478,7 +451,7 @@ public:
                 if(check_comment(line)==0) { //add every moleculename in the [ molecules ] section to "moleculenames", taking care of how often the molecule is present
                     sscanf (line.c_str(),"%s %d",c1,&n2);
                     for(int i=0; i<n2; i++) {
-                        moleculenames.push_back(string(c1));
+                        moleculenames.push_back(std::string(c1));
                     }
 
                     //and check if the previous [ moleculetype ] section had exactly one [ atoms ] and [ bonds ] section
@@ -549,7 +522,7 @@ public:
 
 
 
-    void make_bonds_table() {
+    void Topology::make_bonds_table() {
         vector< vector <int> > dummyvec;
         vector <int> dummyvec1;
         dummyvec1.push_back(0);
@@ -577,7 +550,7 @@ public:
 
 
 
-    void get_roots() {
+    void Topology::get_roots() {
         int counter;
         int sav;
         int improperscounter;
@@ -627,6 +600,3 @@ public:
         }
     }
 
-
-
-};

@@ -1,5 +1,5 @@
 //    The utility library for the PARENT program suite
-//    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
+//    Copyright (C) 2016  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License  version 3
@@ -42,12 +42,11 @@
 #define TYPE_DD 5
 
 
-#include <iostream>
+#include <string>
 
+double get_mutual(int type,int index1, int index2,int nDihedrals, double* bondsEntropy1D, double* anglesEntropy1D, double* dihedralsEntropy1D, double* bbEntropy, double* baEntropy, double* bdEntropy, double* aaEntropy, double* adEntropy, double* ddEntropy, int suppressWarning=0);
 
-using namespace std;
-
-double get_mutual(int type,int index1, int index2,int nDihedrals, double* bondsEntropy1D, double* anglesEntropy1D, double* dihedralsEntropy1D, double* bbEntropy, double* baEntropy, double* bdEntropy, double* aaEntropy, double* adEntropy, double* ddEntropy);
-
+char* getCmdOption(char ** begin, char ** end, const std::string& option);
+bool cmdOptionExists(char** begin, char** end, const std::string& option);
 
 

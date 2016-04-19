@@ -1,5 +1,5 @@
 //    The ASCII IO library for the PARENT program suite
-//    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
+//    Copyright (C) 2016  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License  version 3
@@ -27,6 +27,14 @@
 
 
 
+
+
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
 
 
 
@@ -90,3 +98,59 @@ string strip_blanks(string line) {
     }
     return tmpstring1;
 }
+
+
+//to read an index file
+int read_ndx_file(ifstream *ndxfile, vector <int> *group1, vector <int> *group2, string name1, string name2) {
+    int group1flag=0;
+    int group2flag=0;
+    int tmpint;
+    bool isAtom;
+    string line,compressedLine,item;
+    stringstream linestream(line);
+    vector <string> items;
+    name1="["+name1+"]";
+    name2="["+name2+"]";
+  
+  while (getline((*ndxfile), line)) {// for all lines in the file
+        compressedLine=delete_char(line,' ');// if the line defines a group of atoms, e. g. [ Backbone ]
+        if((compressedLine[0]=='[')&&(compressedLine[compressedLine.length()-1]==']')){group1flag=0;group2flag=0;}
+        
+        if(group1flag==1){// if the group has been identified as group1 to retrieve
+          linestream.clear();
+          linestream<<line;
+           while (getline(linestream, item,' ')) {
+            if(item.length()!=0){
+            isAtom = true;// check if the item is a number
+            for(unsigned int i=0; i<item.length();i++){isAtom=isAtom&&isdigit(item[i]);}
+              if(!isAtom){cerr<<"ERROR READING INDEX FILE: ITEM \""<<item<<"\" IN SECTION \""<<name1<<"\" IS NOT A PROPER ATOM NUMBER!"<<endl;return 1;}
+              sscanf (item.c_str(),"%d",&tmpint);
+              group1->push_back(tmpint);//and add this number to group1
+            }
+          }
+        }
+        
+        if(group2flag==1){// if the group has been identified as group2 to retrieve
+          linestream.clear();
+          linestream<<line;
+           while (getline(linestream, item,' ')) {
+            if(item.length()!=0){
+            isAtom = true;// check if the item is a number
+            for(unsigned int i=0; i<item.length();i++){isAtom=isAtom&&isdigit(item[i]);}
+              if(!isAtom){cerr<<"ERROR READING INDEX FILE: ITEM \""<<item<<"\" IN SECTION \""<<name1<<"\" IS NOT A PROPER ATOM NUMBER!"<<endl;return 1;}
+              sscanf (item.c_str(),"%d",&tmpint);
+              group2->push_back(tmpint);//and add this number to group2
+            }
+          }
+        }
+        
+        if(compressedLine==name1){group1flag=1;}//check if the line declares the requested group1
+        if(compressedLine==name2){group2flag=1;}// or group2
+    }
+
+
+return 0;
+}
+
+
+

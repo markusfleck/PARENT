@@ -4,11 +4,6 @@
 TRJ="test_system/UBQ_UBM2.xtc"
 TOP="test_system/UBQ_UBM2.top"
 
-#Optional: Specify the index file and the group names for which (leave blank if not wanted)
-NDX="test_system/UBQ_UBM2.ndx"
-GRP1="r_1"
-GRP2="r_2"
-
 # Specify your output directory
 OUTDIR=output
 

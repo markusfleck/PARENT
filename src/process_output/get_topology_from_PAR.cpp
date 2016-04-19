@@ -33,7 +33,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string.h>
+#include <cstring>
 
 
 
@@ -41,6 +41,7 @@ using namespace std;
 
 
 #include "../util/io/io.h"
+#include "../util/util.h"
 
 
 int main(int argc, char* argv[])
@@ -53,12 +54,25 @@ int main(int argc, char* argv[])
     vector <int> residueNumbers;
     vector <string> atomNames;
     vector <string> belongsToMolecule;
+	
+		if(argc!=3){
+        cerr<<"USAGE:\n"<<argv[0]<<" -p input.par"<<endl;
+        return 1;
+    }
+		if(!cmdOptionExists(argv, argv+argc, "-p")){
+        cerr<<"USAGE:\n"<<argv[0]<<" -p input.par"<<endl;
+			return 1;
+    }
+		char* inputFilename = getCmdOption(argv, argv+argc, "-p");
 
-    ifstream infile(argv[1], ios::binary | ios::in);
-    if(infile.is_open()&&argc==2) {
+    ifstream infile(inputFilename, ios::binary | ios::in);
+    if(!infile.is_open()) {
+			cerr<<"ERROR: COULD NOT OPEN FILE "<<inputFilename<<" !"<<endl;
+			return 1;
+		}
         //first read the par header
         if(0!=read_PAR_header(&infile,&nDihedrals,&double_prec,&numFrames,&dihedrals_top, &masses, &version, &bDens, &aDens, &dDens, &bDens1D, &aDens1D, &dDens1D,&residues,&residueNumbers,&atomNames,&belongsToMolecule)) {
-            cerr<<"ERROR READING HEADER OF FILE "<<argv[1]<<" !"<<endl;
+            cerr<<"ERROR READING HEADER OF FILE "<<inputFilename<<" !"<<endl;
             return 1;
         }
         cout<<"#bond #atom1 #atom2 "<<endl;
@@ -77,16 +91,8 @@ int main(int argc, char* argv[])
         for(int i=0; i<nDihedrals; i++) {
             cout<<i+1<<" "<<dihedrals_top[i][0]<<" "<<dihedrals_top[i][1]<<" "<<dihedrals_top[i][2]<<" "<<dihedrals_top[i][3]<<" "<<dihedrals_top[i][4]<<" "<<dihedrals_top[i][5]<<endl;
         }
-    }
-    else {
-        if(argc==2) {
-            cerr<<"ERROR: COULD NOT OPEN FILE "<<argv[1]<<" !"<<endl;
-        }
-        else {
-            cerr<<"usage: "<<argv[0]<<" entropyfile.par"<<endl;
-        }
-        return 1;
-    }
+
+
     infile.close();
 
 

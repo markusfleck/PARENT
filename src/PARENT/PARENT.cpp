@@ -37,11 +37,12 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string.h>
+#include <cstring>
 #include <math.h>
 #include <sys/time.h>
 
-
+#include "../util/io/io.h"
+#include "../util/util.h"
 
 
 #pragma pack(1)
@@ -79,7 +80,8 @@ using namespace std;
 
 
 
-#include "../util/io/io.h"
+
+
 
 
 
@@ -184,9 +186,15 @@ int main(int argc, char *argv[])  {
         cout<<endl;
         cout<<endl;
         cout<<endl;
-        if(argc==9) {
-            string tmp1(argv[1]); //first argument is thee .bat trajectory file
-            string tmp2(argv[2]); //second argument is the .par output file
+        if(argc==17) {
+							
+						if(!cmdOptionExists(argv, argv+argc, "-b")||!cmdOptionExists(argv, argv+argc, "-o")||!cmdOptionExists(argv, argv+argc, "-b1D")||!cmdOptionExists(argv, argv+argc, "-a1D")||!cmdOptionExists(argv, argv+argc, "-d1D")||!cmdOptionExists(argv, argv+argc, "-b2D")||!cmdOptionExists(argv, argv+argc, "-a2D")||!cmdOptionExists(argv, argv+argc, "-d2D")){
+                cerr<<"USAGE: "<<argv[0]<<" -b input.bat -o entropy.par -b1D #bondsbins1D -a1D #anglesbins1D -d1D #dihedralsbins1D -b2D #bondsbins2D -a2D #anglesbins2D -d2D #dihedralsbins2D\n";    //check for correct command line options
+                MPI_Abort(MPI_COMM_WORLD, rc);
+							}
+						
+						string tmp1(getCmdOption(argv, argv+argc, "-b")); //first argument is thee .bat trajectory file
+            string tmp2(getCmdOption(argv, argv+argc, "-o")); //second argument is the .par output file
             char *ptr,*type1,*type2;
             char delimiter[] = ".";
 
@@ -202,30 +210,30 @@ int main(int argc, char *argv[])  {
                 ptr = strtok(NULL, delimiter);
             }
             if((strcmp(type1,"bat"))||(strcmp(type2,"par"))) {
-                cerr<<"USAGE: "<<argv[0]<<" input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D\n";    //check for the extensions of the input and output file
+                cerr<<"USAGE: "<<argv[0]<<" -b input.bat -o entropy.par -b1D #bondsbins1D -a1D #anglesbins1D -d1D #dihedralsbins1D -b2D #bondsbins2D -a2D #anglesbins2D -d2D #dihedralsbins2D\n";    //check for the extensions of the input and output file
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[3],"%d",&bDens1D)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-b1D"),"%d",&bDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D bonds from command line! Aborting"<<endl;    //read the number of bins for the 1D-bond calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[4],"%d",&aDens1D)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-a1D"),"%d",&aDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D angles from command line! Aborting"<<endl;    //read the number of bins for the 1D-angle calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[5],"%d",&dDens1D)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-d1D"),"%d",&dDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D dihedrals from command line! Aborting"<<endl;    //read the number of bins for the 1D-dihedral calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[6],"%d",&bDens)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-b2D"),"%d",&bDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D bonds from command line! Aborting"<<endl;    //read the number of bins for the 2D-bond calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[7],"%d",&aDens)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-a2D"),"%d",&aDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D angles from command line! Aborting"<<endl;    //read the number of bins for the 2D-angle calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
-            if(sscanf(argv[8],"%d",&dDens)!=1) {
+            if(sscanf(getCmdOption(argv, argv+argc, "-d2D"),"%d",&dDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D dihedrals from command line! Aborting"<<endl;    //read the number of bins for the 2D-dihedral calculation and check for correctness
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
@@ -236,7 +244,7 @@ int main(int argc, char *argv[])  {
 
         }
         else {
-            cerr<<"USAGE: "<<argv[0]<<" input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D\n";
+            cerr<<"USAGE: "<<argv[0]<<" -b input.bat -o entropy.par -b1D #bondsbins1D -a1D #anglesbins1D -d1D #dihedralsbins1D -b2D #bondsbins2D -a2D #anglesbins2D -d2D #dihedralsbins2D\n";
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
     }
@@ -257,31 +265,31 @@ int main(int argc, char *argv[])  {
     ofstream par_file;
     MPI_Barrier(MPI_COMM_WORLD);
     if(rank==MASTER) {
-        cout<<"Reading file "<<argv[1]<<" .\n";
+        cout<<"Reading file "<<getCmdOption(argv, argv+argc, "-b")<<" .\n";
         //master process opens the input/output files
-        infile.open(argv[1], ios::binary | ios::in );
-        par_file.open(argv[2],ios::binary | ios::out);
+        infile.open(getCmdOption(argv, argv+argc, "-b"), ios::binary | ios::in );
+        par_file.open(getCmdOption(argv, argv+argc, "-o"),ios::binary | ios::out);
         if(!(infile.is_open())) {
-            cerr<<"ERROR: Could not open file "<<argv[1]<<" ! Aborting."<<endl;
+            cerr<<"ERROR: Could not open file "<<getCmdOption(argv, argv+argc, "-b")<<" ! Aborting."<<endl;
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
         if(!(par_file.is_open())) {
-            cerr<<"ERROR: Could not open file "<<argv[2]<<" ! Aborting."<<endl;
+            cerr<<"ERROR: Could not open file "<<getCmdOption(argv, argv+argc, "-o")<<" ! Aborting."<<endl;
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
 
         //and reads the header of the trajectory
         if(read_BAT_header(&infile,&double_prec,&numFrames,&dihedrals_top,&masses,&residues,&residueNumbers,&atomNames,&belongsToMolecule)!=0) {
-            cerr<<"AN ERROR HAS OCCURED WHILE READING THE HEADER OF THE FILE " <<argv[1]<<" . QUITTING PROGRAM.\n";
+            cerr<<"AN ERROR HAS OCCURED WHILE READING THE HEADER OF THE FILE " <<getCmdOption(argv, argv+argc, "-b")<<" . QUITTING PROGRAM.\n";
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
         nDihedrals=dihedrals_top.size();
-        cout<<argv[1]<<" specs:"<<endl;
+        cout<<getCmdOption(argv, argv+argc, "-b")<<" specs:"<<endl;
         cout<<"Precision: "<<(double_prec==1?"double":"single")<<" #Atoms: "<<nDihedrals+3<<" #Frames: "<<numFrames<<endl;  // ---------------------------------------------------
 
         //and writes the header of the output (.par) file
         if(write_PAR_header(&par_file,nDihedrals,double_prec,numFrames,&dihedrals_top, &masses,bDens1D,aDens1D,dDens1D,bDens,aDens,dDens, &residues,&residueNumbers,&atomNames,&belongsToMolecule)!=0) {
-            cerr<<"AN ERROR HAS OCCURED WHILE WRITING THE HEADER OF THE FILE " <<argv[2]<<" . QUITTING PROGRAM.\n";
+            cerr<<"AN ERROR HAS OCCURED WHILE WRITING THE HEADER OF THE FILE " <<getCmdOption(argv, argv+argc, "-o")<<" . QUITTING PROGRAM.\n";
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
     }
@@ -442,7 +450,7 @@ int main(int argc, char *argv[])  {
         for(int i=0; i<numFrames; i++) { //for all frames in the trajectory
             //~ if(read_BAT_frame(&infile,double_prec, tmpBondsMaster, tmpAnglesMaster, tmpDihedralsMaster, nDihedrals)!=0) { //read the frame and react to errors
             if(read_BAT_frame(&infile,double_prec, nDihedrals, floatdummyarray[0], floatdummyarray[0], (float**)floatdummyarray, doubledummyarray,doubledummyarray,doubledummyarray,doubledummyarray,tmpBondsMaster, tmpAnglesMaster, tmpDihedralsMaster) !=0) { //read the frame and react to errors
-                cerr<<"An ERROR has occurred while reading the file " <<argv[1]<<" . Quitting Program.\n";
+                cerr<<"An ERROR has occurred while reading the file " <<getCmdOption(argv, argv+argc, "-b")<<" . Quitting Program.\n";
                 MPI_Abort(MPI_COMM_WORLD, rc);
             }
 
@@ -1485,7 +1493,7 @@ int main(int argc, char *argv[])  {
     if(rank==MASTER) {
         gettimeofday (&tv3, NULL);
         if(write_PAR_body(&par_file,nDihedrals,bondsEntropy1DMaster, anglesEntropy1DMaster, dihedralsEntropy1DMaster, bbEntropy, baEntropy, bdEntropy, aaEntropy, adEntropy, ddEntropy)!=0) {
-            cerr<<"AN ERROR HAS OCCURED WHILE WRITING THE FILE " <<argv[2]<<" .\n";
+            cerr<<"AN ERROR HAS OCCURED WHILE WRITING THE FILE " <<getCmdOption(argv, argv+argc, "-o")<<" .\n";
         }
     }
 

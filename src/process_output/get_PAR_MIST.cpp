@@ -38,7 +38,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string.h>
+#include <cstring>
 #include <cstdlib>
 #include <sys/time.h>
 
@@ -71,11 +71,16 @@ int main(int argc, char* argv[])
 
 
 
-    if(argc!=3) {
-        cerr<<"USAGE:\n"<<argv[0]<<" input.par output.txt"<<endl;
+    if(argc!=5) {
+        cerr<<"USAGE:\n"<<argv[0]<<" -p input.par -o output.par"<<endl;
         return 1;
     }
-
+		if(!cmdOptionExists(argv, argv+argc, "-p")||!cmdOptionExists(argv, argv+argc, "-o")){
+        cerr<<"USAGE:\n"<<argv[0]<<" -p input.par -o output.par"<<endl;
+        return 1;
+    }
+		char* inputFilename = getCmdOption(argv, argv+argc, "-p");
+		char* outputFilename = getCmdOption(argv, argv+argc, "-o");
 
     int numProcesses, rank, rc,len,threadLevelProvided, threadLevelClaimed;
     char hostName[MPI_MAX_PROCESSOR_NAME];
@@ -132,11 +137,6 @@ int main(int argc, char* argv[])
 
     double totalMutual=0;
 
-
-    int b=0;
-    int a=1;
-    int d=2;
-
     char myChar[3];
     myChar[TYPE_B]='b';
     myChar[TYPE_A]='a';
@@ -157,9 +157,11 @@ int main(int argc, char* argv[])
     bool allocation_worked;
 
     ifstream infile;
-    ofstream outfile;
+		ofstream outfile;
+		
+		EntropyMatrix* mat;
+		
     cout.precision(12);
-    outfile.precision(12);
 
 
     bool pb=1; //set true for bonds calculation
@@ -203,24 +205,53 @@ int main(int argc, char* argv[])
             cerr<<"ERROR: YOU CANNOT IGNORE ALL DEGREES OF FREEDOM !"<<endl;
             return 1;
         }
-        outfile.open(argv[2], ios::out);
 
-        infile.open(argv[1], ios::binary | ios::in); //MASTER process opens the .par file and reads the header
+        infile.open(inputFilename, ios::binary | ios::in); //MASTER process opens the .par file and reads the header
+				
+				outfile.open(outputFilename, ios::binary | ios::out); //check if the outputfile is writeable
+				if(!outfile.is_open()) {
+						cerr<<"ERROR: COULD NOT OPEN FILE "<<outputFilename<<" FOR WRITING!"<<endl;
+            MPI_Abort(MPI_COMM_WORLD, rc);
+				}
+				outfile.close();
+				
         if(infile.is_open()) {
-            if(outfile.is_open()) {
                 if(read_PAR_header(&infile,&nDihedrals,&double_prec,&numFrames,&dihedrals_top, &masses, &version, &bDens, &aDens, &dDens, &bDens1D, &aDens1D, &dDens1D,&residues,&residueNumbers,&atomNames,&belongsToMolecule)!=0) {
-                    cerr<<"An ERROR has occurred while reading the file " <<argv[1]<<" . Quitting Program.\n";
+                    cerr<<"An ERROR has occurred while reading the file " <<inputFilename<<" . Quitting Program.\n";
                     MPI_Abort(MPI_COMM_WORLD, rc);
                 }
                 nDihedrals=dihedrals_top.size();
-            }
-            else {
-                cerr<<"ERROR: COULD NOT OPEN FILE "<<argv[2]<<" !"<<endl;
-                MPI_Abort(MPI_COMM_WORLD, rc);
-            }
+								try{
+									mat = new EntropyMatrix(inputFilename);//load the .par file into the object for output (not for processing!)
+									for(int i=0;i<3;i++){//and set alle mutual information values to zero (0,1,2 stands for bonds, angles, dihedrals)
+										for(int k=1;k<=nDihedrals+2-i;k++){
+												for(int l=k+1;l<=nDihedrals+2-i;l++){
+													mat->setMutual(i,i,k,l,0);
+												}
+											}
+										for(int j=i+1;j<3;j++){
+											for(int k=1;k<=nDihedrals+2-i;k++){
+												for(int l=1;l<=nDihedrals+2-j;l++){
+													mat->setMutual(i,j,k,l,0);
+												}
+											}
+										}
+									}
+								}
+								catch(MyError myError){
+									cerr<<myError.what()<<endl;
+									cerr<<"\n\nUSAGE:\n"<<argv[0]<<" -p input.par -o output.par\n"<<endl;
+									MPI_Abort(MPI_COMM_WORLD, rc);
+								}
+								catch(...)
+								{
+									cerr<<"AN UNIDENTIFIED ERROR HAS OCCURRED! ABORTING.\n"<<endl;
+									cerr<<"\n\nUSAGE:\n"<<argv[0]<<" -p input.par -o output.par\n"<<endl;
+									MPI_Abort(MPI_COMM_WORLD, rc);
+								}
         }
         else {
-            cerr<<"ERROR: COULD NOT OPEN FILE "<<argv[1]<<" !"<<endl;
+            cerr<<"ERROR: COULD NOT OPEN FILE "<<inputFilename<<" !"<<endl;
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
     }
@@ -272,7 +303,7 @@ int main(int argc, char* argv[])
     if(rank==MASTER) {
 
         if(read_PAR_body(&infile,nDihedrals,&bondsEntropy1D, &anglesEntropy1D, &dihedralsEntropy1D, &bbEntropy, &baEntropy, &bdEntropy, &aaEntropy, &adEntropy, &ddEntropy)!=0) {
-            cerr<<"An ERROR has occurred while reading the file " <<argv[1]<<" . Quitting Program.\n";
+            cerr<<"An ERROR has occurred while reading the file " <<inputFilename<<" . Quitting Program.\n";
             MPI_Abort(MPI_COMM_WORLD, rc);
         }
 
@@ -484,8 +515,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_B][TYPE_B]; j<myOutEnd2D[TYPE_B][TYPE_B]; j++) { //and for every bond in the "Out" vector of the MPI process
                         if(mutual[TYPE_BB][In[TYPE_B][i]][Out[TYPE_B][j]]>highestMutualThread) { //if the mutual information term is higher than the previously highest
                             highestMutualThread=mutual[TYPE_BB][In[TYPE_B][i]][Out[TYPE_B][j]]; //store the value
-                            highestType1Thread=b; //the type of the mutual informtion term (here In==b and Out==b)
-                            highestType2Thread=b;
+                            highestType1Thread=TYPE_B; //the type of the mutual informtion term (here In==TYPE_B and Out==TYPE_B)
+                            highestType2Thread=TYPE_B;
                             highestIndex1Thread=i; //and the indices
                             highestIndex2Thread=j;
                         }
@@ -498,8 +529,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_B][TYPE_A]; j<myOutEnd2D[TYPE_B][TYPE_A]; j++) {
                         if(mutual[TYPE_BA][In[TYPE_B][i]][Out[TYPE_A][j]]>highestMutualThread) {
                             highestMutualThread=mutual[TYPE_BA][In[TYPE_B][i]][Out[TYPE_A][j]];
-                            highestType1Thread=b;
-                            highestType2Thread=a;
+                            highestType1Thread=TYPE_B;
+                            highestType2Thread=TYPE_A;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -512,8 +543,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_B][TYPE_D]; j<myOutEnd2D[TYPE_B][TYPE_D]; j++) {
                         if(mutual[TYPE_BD][In[TYPE_B][i]][Out[TYPE_D][j]]>highestMutualThread) {
                             highestMutualThread=mutual[TYPE_BD][In[TYPE_B][i]][Out[TYPE_D][j]];
-                            highestType1Thread=b;
-                            highestType2Thread=d;
+                            highestType1Thread=TYPE_B;
+                            highestType2Thread=TYPE_D;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -526,8 +557,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_A][TYPE_B]; j<myOutEnd2D[TYPE_A][TYPE_B]; j++) {
                         if(mutual[TYPE_BA][Out[TYPE_B][j]][In[TYPE_A][i]]>highestMutualThread) { //notice that the Out[TYPE_B]-index comes before the In[TYPE_A]-index for mutual[TYPE_BA]
                             highestMutualThread=mutual[TYPE_BA][Out[TYPE_B][j]][In[TYPE_A][i]];
-                            highestType1Thread=a;
-                            highestType2Thread=b;
+                            highestType1Thread=TYPE_A;
+                            highestType2Thread=TYPE_B;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -540,8 +571,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_A][TYPE_A]; j<myOutEnd2D[TYPE_A][TYPE_A]; j++) {
                         if(mutual[TYPE_AA][In[TYPE_A][i]][Out[TYPE_A][j]]>highestMutualThread) {
                             highestMutualThread=mutual[TYPE_AA][In[TYPE_A][i]][Out[TYPE_A][j]];
-                            highestType1Thread=a;
-                            highestType2Thread=a;
+                            highestType1Thread=TYPE_A;
+                            highestType2Thread=TYPE_A;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -554,8 +585,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_A][TYPE_D]; j<myOutEnd2D[TYPE_A][TYPE_D]; j++) {
                         if(mutual[TYPE_AD][In[TYPE_A][i]][Out[TYPE_D][j]]>highestMutualThread) {
                             highestMutualThread=mutual[TYPE_AD][In[TYPE_A][i]][Out[TYPE_D][j]];
-                            highestType1Thread=a;
-                            highestType2Thread=d;
+                            highestType1Thread=TYPE_A;
+                            highestType2Thread=TYPE_D;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -568,8 +599,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_D][TYPE_B]; j<myOutEnd2D[TYPE_D][TYPE_B]; j++) {
                         if(mutual[TYPE_BD][Out[TYPE_B][j]][In[TYPE_D][i]]>highestMutualThread) { //notice that the Out[TYPE_B]-index comes before the In[TYPE_D]-index for mutual[TYPE_BD]
                             highestMutualThread=mutual[TYPE_BD][Out[TYPE_B][j]][In[TYPE_D][i]];
-                            highestType1Thread=d;
-                            highestType2Thread=b;
+                            highestType1Thread=TYPE_D;
+                            highestType2Thread=TYPE_B;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -582,8 +613,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_D][TYPE_A]; j<myOutEnd2D[TYPE_D][TYPE_A]; j++) {
                         if(mutual[TYPE_AD][Out[TYPE_A][j]][In[TYPE_D][i]]>highestMutualThread) { //notice that the Out[TYPE_A]-index comes before the In[TYPE_D]-index for mutual[TYPE_AD]
                             highestMutualThread=mutual[TYPE_AD][Out[TYPE_A][j]][In[TYPE_D][i]];
-                            highestType1Thread=d;
-                            highestType2Thread=a;
+                            highestType1Thread=TYPE_D;
+                            highestType2Thread=TYPE_A;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -596,8 +627,8 @@ int main(int argc, char* argv[])
                     for(int j=myOutBegin2D[TYPE_D][TYPE_D]; j<myOutEnd2D[TYPE_D][TYPE_D]; j++) {
                         if(mutual[TYPE_DD][In[TYPE_D][i]][Out[TYPE_D][j]]>highestMutualThread) {
                             highestMutualThread=mutual[TYPE_DD][In[TYPE_D][i]][Out[TYPE_D][j]];
-                            highestType1Thread=d;
-                            highestType2Thread=d;
+                            highestType1Thread=TYPE_D;
+                            highestType2Thread=TYPE_D;
                             highestIndex1Thread=i;
                             highestIndex2Thread=j;
                         }
@@ -657,82 +688,89 @@ int main(int argc, char* argv[])
                 MPI_Bcast(&highestType2, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
                 MPI_Bcast(&highestIndex1, 1, MPI_INT, MASTER, MPI_COMM_WORLD); // as well as indices of the degrees of freedom
                 MPI_Bcast(&highestIndex2, 1, MPI_INT, MASTER, MPI_COMM_WORLD);
+								
+								if(rank==MASTER){// update the output EntropyMatrix
+									mat->setMutual(highestType1,highestType2,In[highestType1][highestIndex1]+1,Out[highestType2][highestIndex2]+1,highestMutual);
+									if(mat->getMutual(highestType1,highestType2,In[highestType1][highestIndex1]+1,Out[highestType2][highestIndex2]+1)==0){
+										cerr<<"ERROR SETTING MUTUAL IFORMATION "<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[highestType1][highestIndex1]+1<<" "<<Out[highestType1][highestIndex2]+1<<"   MI: "<<highestMutual<<"\nABORTING."<<endl;
+									}
+								}
 
 
 
                 totalMutual+=highestMutual; //update the total mutual information
-                if(highestType1==b) { // if the "In" type was a bond
-                    if(highestType2==b) { // and the "Out" type was also a bond
+                if(highestType1==TYPE_B) { // if the "In" type was a bond
+                    if(highestType2==TYPE_B) { // and the "Out" type was also a bond
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_B].push_back(Out[TYPE_B][highestIndex2]);
                         Out[TYPE_B].erase(Out[TYPE_B].begin()+highestIndex2); //put the the bond from the Out[TYPE_B] vector to the In[TYPE_B] vector
                         totalBbMutual+=highestMutual; //and update the sum of the bonds-bonds mutual information
                     }
-                    if(highestType2==a) { //if  otherwise the "Out" type was an angle
+                    if(highestType2==TYPE_A) { //if  otherwise the "Out" type was an angle
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_A].push_back(Out[TYPE_A][highestIndex2]);
                         Out[TYPE_A].erase(Out[TYPE_A].begin()+highestIndex2); //put the angle from the Out[TYPE_A] vector to the In[TYPE_A] vector
                         totalBaMutual+=highestMutual; //and update the sum of the bonds-angles mutual information
                     }
-                    if(highestType2==d) { //analogously for Out[TYPE_D]
+                    if(highestType2==TYPE_D) { //analogously for Out[TYPE_D]
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_B][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_D].push_back(Out[TYPE_D][highestIndex2]);
                         Out[TYPE_D].erase(Out[TYPE_D].begin()+highestIndex2);
                         totalBdMutual+=highestMutual;
                     }
                 }
-                if(highestType1==a) { //also for all In[TYPE_A] combinations
-                    if(highestType2==b) {
+                if(highestType1==TYPE_A) { //also for all In[TYPE_A] combinations
+                    if(highestType2==TYPE_B) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_B].push_back(Out[TYPE_B][highestIndex2]);
                         Out[TYPE_B].erase(Out[TYPE_B].begin()+highestIndex2);
                         totalBaMutual+=highestMutual;
                     }
-                    if(highestType2==a) {
+                    if(highestType2==TYPE_A) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_A].push_back(Out[TYPE_A][highestIndex2]);
                         Out[TYPE_A].erase(Out[TYPE_A].begin()+highestIndex2);
                         totalAaMutual+=highestMutual;
                     }
-                    if(highestType2==d) {
+                    if(highestType2==TYPE_D) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_A][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_D].push_back(Out[TYPE_D][highestIndex2]);
                         Out[TYPE_D].erase(Out[TYPE_D].begin()+highestIndex2);
                         totalAdMutual+=highestMutual;
                     }
                 }
-                if(highestType1==d) { //and all In[TYPE_D] combinations
-                    if(highestType2==b) {
+                if(highestType1==TYPE_D) { //and all In[TYPE_D] combinations
+                    if(highestType2==TYPE_B) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_B][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_B].push_back(Out[TYPE_B][highestIndex2]);
                         Out[TYPE_B].erase(Out[TYPE_B].begin()+highestIndex2);
                         totalBdMutual+=highestMutual;
                     }
-                    if(highestType2==a) {
+                    if(highestType2==TYPE_A) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_A][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_A].push_back(Out[TYPE_A][highestIndex2]);
                         Out[TYPE_A].erase(Out[TYPE_A].begin()+highestIndex2);
                         totalAdMutual+=highestMutual;
                     }
-                    if(highestType2==d) {
+                    if(highestType2==TYPE_D) {
                         if(rank==MASTER) {
-                            outfile<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
+                            cout<<myChar[highestType1]<<" "<<myChar[highestType2]<<" "<<In[TYPE_D][highestIndex1]+1<<" "<<Out[TYPE_D][highestIndex2]+1<<"   MI: "<<highestMutual<<"   left to process: "<<Out[TYPE_B].size()+Out[TYPE_A].size()+Out[TYPE_D].size()<<endl;
                         }
                         In[TYPE_D].push_back(Out[TYPE_D][highestIndex2]);
                         Out[TYPE_D].erase(Out[TYPE_D].begin()+highestIndex2);
@@ -753,16 +791,16 @@ int main(int argc, char* argv[])
 
     if(rank==MASTER) {
         infile.close();
-        outfile<<"TOTAL 1D BONDS ENTROPY = "<<totalBondsEntropy<<endl;
-        outfile<<"TOTAL 1D ANGLES ENTROPY = "<<totalAnglesEntropy<<endl;
-        outfile<<"TOTAL 1D DIHEDRALS ENTROPY = "<<totalDihedralsEntropy<<endl;
-        outfile<<"TOTAL 2D BONDS-BONDS MUTUAL INFORMATION = "<<totalBbMutual<<endl;
-        outfile<<"TOTAL 2D BONDS-ANGLES MUTUAL INFORMATION = "<<totalBaMutual<<endl;
-        outfile<<"TOTAL 2D BONDS-DIHEDRALS MUTUAL INFORMATION = "<<totalBdMutual<<endl;
-        outfile<<"TOTAL 2D ANGLES-ANGLES MUTUAL INFORMATION = "<<totalAaMutual<<endl;
-        outfile<<"TOTAL 2D ANGLES-DIHEDRALS MUTUAL INFORMATION = "<<totalAdMutual<<endl;
-        outfile<<"TOTAL 2D DIHEDRALS-DIHEDRALS MUTUAL INFORMATION = "<<totalDdMutual<<endl;
-        outfile<<"TOTAL CONFIGURATIONAL ENTROPY = "<<totalBondsEntropy+totalAnglesEntropy+totalDihedralsEntropy-totalMutual<<endl;
+        cout<<"TOTAL 1D BONDS ENTROPY = "<<totalBondsEntropy<<endl;
+        cout<<"TOTAL 1D ANGLES ENTROPY = "<<totalAnglesEntropy<<endl;
+        cout<<"TOTAL 1D DIHEDRALS ENTROPY = "<<totalDihedralsEntropy<<endl;
+        cout<<"TOTAL 2D BONDS-BONDS MUTUAL INFORMATION = "<<totalBbMutual<<endl;
+        cout<<"TOTAL 2D BONDS-ANGLES MUTUAL INFORMATION = "<<totalBaMutual<<endl;
+        cout<<"TOTAL 2D BONDS-DIHEDRALS MUTUAL INFORMATION = "<<totalBdMutual<<endl;
+        cout<<"TOTAL 2D ANGLES-ANGLES MUTUAL INFORMATION = "<<totalAaMutual<<endl;
+        cout<<"TOTAL 2D ANGLES-DIHEDRALS MUTUAL INFORMATION = "<<totalAdMutual<<endl;
+        cout<<"TOTAL 2D DIHEDRALS-DIHEDRALS MUTUAL INFORMATION = "<<totalDdMutual<<endl;
+        cout<<"TOTAL CONFIGURATIONAL ENTROPY = "<<totalBondsEntropy+totalAnglesEntropy+totalDihedralsEntropy-totalMutual<<endl;
     }
 
 
@@ -775,8 +813,16 @@ int main(int argc, char* argv[])
     cout<<"MPI PROCESS "<<rank<<" FINISHED."<<endl;  //<-------------------------------
     MPI_Barrier(MPI_COMM_WORLD);
     if(rank==MASTER)
-    {
-        outfile.close();
+    {	
+			try{
+					mat->write(outputFilename);
+				}
+				catch(...){
+									cerr<<"ERROR WRITING TO FILE "<<outputFilename<<" ! ABORTING.\n"<<endl;
+									cerr<<"\n\nUSAGE:\n"<<argv[0]<<" -p input.par -o output.par\n"<<endl;
+									MPI_Abort(MPI_COMM_WORLD, rc);
+					
+				}
         gettimeofday (&tv3, NULL);
         cout<<"Initialization + readin time: "<<tv2.tv_sec+0.000001 * tv2.tv_usec-tv1.tv_sec-0.000001 * tv1.tv_usec<<endl;
         cout<<"Calculation time: "<<tv3.tv_sec+0.000001 * tv3.tv_usec-tv2.tv_sec-0.000001 * tv2.tv_usec<<endl;

@@ -1,5 +1,5 @@
 //    The IO library for the PARENT program suite
-//    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
+//    Copyright (C) 2016  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License  version 3

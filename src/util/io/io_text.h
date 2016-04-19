@@ -1,5 +1,5 @@
 //    The ASCII IO library for the PARENT program suite
-//    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
+//    Copyright (C) 2016  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
 //    it under the terms of the GNU General Public License  version 3
@@ -30,19 +30,19 @@
 
 
 
+#ifndef IO_TEXT_H
+#define IO_TEXT_H
+
 // #pragma pack(1) causes problems!
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <string.h>
-#include <cstdlib>
-
-using namespace std;
 
 
-string strip_line(string line);
-string delete_char(string line,char del);
-string strip_blanks(string line);
+
+
+std::string strip_line(std::string line);
+std::string delete_char(std::string line,char del);
+std::string strip_blanks(std::string line);
+int read_ndx_file(std::ifstream *ndxfile, std::vector <int> *group1, std::vector <int> *group2, std::string name1, std::string name2);
+
+#endif
 

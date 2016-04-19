@@ -1,7 +1,5 @@
 # PARENT: a parallel software suite for the calculation of configurational entropy in biomolecular systems
 
-AB
-
 PARENT suite, a collection of programs to compute the configurational entropy from a molecular dynamics trajectory
 Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna) 
 
@@ -25,7 +23,27 @@ We kindly ask you to include this citation in works that publish
 results generated using this program or modifications of it.
 <br />  
 <br />  
-<br />  
+<br />
+
+UPDATES:
+
+- An EntropyMatrix class has been created to support handling .par file easier 
+- get_PAR_MIE.x has been rewritten to demonstrate useage of the EntropyMatrix class and ahs been renamed to get_values_from_PAR.x
+- get_PAR_MIST.x now produces a .par file, which is fully compatible with a .par from PARENT.x . Thus, to extract MIST values to text format,
+feed the according .par to get_values_from_PAR.x .
+- get_PAR_info.x has been renamed to get_topology_from_PAR.x
+- classes are now separated in .h and .cpp files
+- While this snapshot is highly assumed to be stable, 
+
+***********************************************************************************************************************************************
+***********************************************************************************************************************************************
+
+THE REST OF THIS README HAS NOT YET BEEN UPDATED!!!
+
+***********************************************************************************************************************************************
+***********************************************************************************************************************************************
+
+
 0) QUICK AND DIRTY
 
   Unzip, and navigate to the top folder. In the file "parameters" change the input
@@ -94,7 +112,7 @@ results generated using this program or modifications of it.
   After executing the "run.sh" script, issue the following commands to check if 
   everything went correctly:
   
-    tail -n 16 output/*_MIE.txt > compare_MIE.txt
+    tail -n 10 output/*_MIE.txt > compare_MIE.txt
     tail -n 10 output/*_MIST.txt > compare_MIST.txt
     
     diff compare_MIE.txt test_system/sample_output/sample_output_MIE.txt
