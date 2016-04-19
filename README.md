@@ -1,6 +1,6 @@
 # PARENT: a parallel software suite for the calculation of configurational entropy in biomolecular systems
 
-ABC
+AB
 
 PARENT suite, a collection of programs to compute the configurational entropy from a molecular dynamics trajectory
 Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna) 
