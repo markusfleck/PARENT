@@ -595,34 +595,38 @@ public:
             tmproots[1]=0;
             tmproots[2]=0;
             tmproots[3]=molecules[i].size();//this will carry over the information about moleculesizes to BAT_topology.cpp
-            for (unsigned int j=0; j<molecules[i].size(); j++) { //for all atoms in the molecule
-                if(bonds_table[molecules[i][j]-1].size()==1) { //if the atom is terminal
-                    counter=0;//set up a counter for the non-terminal atoms connected to roots[i][1]
-                    improperscounter=-1; //to count the terminal atoms connected to roots[i][1] (roots[i][0] is not considered an improper: 0->-1)
-                    sav=-1; //to remember roots[i][2]
-                    for(unsigned int k=0; k<bonds_table[bonds_table[molecules[i][j]-1][0][0]-1].size(); k++) {
-                        if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()>1) {
-                            counter++;    //count the non-terminal atoms connected to roots[i][1] and remember one of them
-                            sav=bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0];
+            for (int min_counter=1; min_counter<=2; min_counter++) {
+                for (unsigned int j=0; j<molecules[i].size(); j++) { //for all atoms in the molecule
+                    if(bonds_table[molecules[i][j]-1].size()==1) { //if the atom is terminal
+                        counter=0;//set up a counter for the non-terminal atoms connected to roots[i][1]
+                        improperscounter=-1; //to count the terminal atoms connected to roots[i][1] (roots[i][0] is not considered an improper: 0->-1)
+                        sav=-1; //to remember roots[i][2]
+                        for(unsigned int k=0; k<bonds_table[bonds_table[molecules[i][j]-1][0][0]-1].size(); k++) {
+                            if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()>1) {
+                                counter++;    //count the non-terminal atoms connected to roots[i][1] and remember one of them
+                                sav=bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0];
+                            }
+                            if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()==1) {
+                                improperscounter++;   //count the terminal atoms connected to roots[i][1]
+                            }
                         }
-                        if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()==1) {
-                            improperscounter++;   //count the terminal atoms connected to roots[i][1]
+                        if((counter==min_counter)&&(improperscounter<lowestimpropers)) { // if there is/are exactly "min_counter" non-terminal atom(s) connected to roots[i][1] and the amount of terminal atoms connected to roots[i][1] is smaller than for previous found root sets
+                            lowestimpropers=improperscounter; //set the new goal for undercutting in the amount of terminal atoms connected to roots[i][1]
+                            tmproots[0]=molecules[i][j]; //temporarily use the terminal atom t roots[i][0]
+                            tmproots[1]=bonds_table[molecules[i][j]-1][0][0]; //temporarily use the only atom connected to the terminal atom as roots[i][1]
+                            tmproots[2]=sav; //since counter is 1, only 1 atom connected to tmproots[1] is non-terminal. Temporarilly use this atom as roots[i][2]
                         }
-                    }
-                    if((counter==1)&&(improperscounter<lowestimpropers)) { // if there is exactly one non-terminal atom connected to roots[i][1] and the amount of terminal atoms connected to roots[i][1] is smaller than for previous found root sets
-                        lowestimpropers=improperscounter; //set the new goal for undercutting in the amount of terminal atoms connected to roots[i][1]
-                        tmproots[0]=molecules[i][j]; //temporarily use the terminal atom t roots[i][0]
-                        tmproots[1]=bonds_table[molecules[i][j]-1][0][0]; //temporarily use the only atom connected to the terminal atom as roots[i][1]
-                        tmproots[2]=sav; //since counter is 1, only 1 atom connected to tmproots[1] is non-terminal. Temporarilly use this atom as roots[i][2]
                     }
                 }
-            }
-            if((tmproots[0]==0)||(tmproots[1]==0)||(tmproots[2]==0)) { //if one of the temporary root atoms is still 0 quit
-                cerr<<"ERROR: COULD NOT FIND ROOT ATOMS FOR MOLECULE "<<i+1<<".\n";
-                exit(EXIT_FAILURE);
-            }
-            else {
-                roots.push_back(tmproots); //else add these temporary root atoms as root atoms for molecule i
+                if((tmproots[0]==0)||(tmproots[1]==0)||(tmproots[2]==0)) { //if one of the temporary root atoms is still 0 quit
+                    if (min_counter<2) continue;
+                    cerr<<"ERROR: COULD NOT FIND ROOT ATOMS FOR MOLECULE "<<i+1<<".\n";
+                    exit(EXIT_FAILURE);
+                }
+                else {
+                    roots.push_back(tmproots); //else add these temporary root atoms as root atoms for molecule i
+                    break;
+                }
             }
         }
     }
