@@ -43,11 +43,13 @@
 
 
 #include <iostream>
-
+#include <string>
+#include <algorithm>
 
 using namespace std;
 
 double get_mutual(int type,int index1, int index2,int nDihedrals, double* bondsEntropy1D, double* anglesEntropy1D, double* dihedralsEntropy1D, double* bbEntropy, double* baEntropy, double* bdEntropy, double* aaEntropy, double* adEntropy, double* ddEntropy);
-
+char *getCmdOption(char **begin, char **end, const std::string &option);
+bool cmdOptionExists(char **begin, char **end, const std::string &option);
 
 

@@ -1,4 +1,4 @@
-//    BAT_builder, a program to convert a molecular dynamics trajectory from Cartesian to internal bond-angle-torsion coordinates
+//    Class for BAT_builder, a program to convert a molecular dynamics trajectory from Cartesian to internal bond-angle-torsion coordinates
 //    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -26,20 +26,23 @@
 
 
 
-
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cstdlib>
+#include <string>
+#include <cstring>
 
 
 
 #include "../util/io/io.h"
-
+#include "topology.h"
 
 
 using namespace std;
 
-class Topology {
-
-public:
-    Topology(string topfileIN,vector <string> backboneAtomNamesIN) {
+Topology::Topology(std::string topfileIN,vector <std::string> backboneAtomNamesIN) {
         current=-1;
         newclustflag=0;
         newclustmassflag=0;
@@ -53,41 +56,11 @@ public:
 
         //start the topology building
         read_topology();
+}
 
-    }
+Topology::~Topology() {}
 
-    ~Topology() {
-
-    }
-
-    vector< vector<int> > moleculetypes;  //contains a list of the atoms in each moleculetype
-    vector< vector<int> > molecules; //contains a list of atoms for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector< vector<int> > angles; //contains a list of angles for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector< vector< vector <int> > > bonds_table; //contains a list of all bonds in the system with proper offset, with bonds_table[#atom-1][#bond-1][0] the bonded atom and bonds_table[atom-1][#bond-1][1] the type of the bond (0==physical, 1==pseudo)
-    vector< vector< vector <int> > > moleculetypebonds; //contains a list  of all bonds for every moleculetype
-    vector< vector< vector <int> > > bonds;  //contains a list of atoms for each molecule in the system with correct offset, as defined in the [ molecules ] section
-    vector<string> moleculetypenames;  //names of the moleculetypes
-    vector<string> moleculenames; //contains a full list of molecule names of the system as defined in the [ molecules ] section (water 1000 => water, water, water.......)
-    vector< vector <string> > moleculetypeResidues; //contains the name of the residue for every moleculetype and every atom
-    vector <string> residues; //contains the name of the residue for every atom in the system
-    vector< vector <int> > moleculetypeResidueNumbers; //contains the name of the residue number for every moleculetype and every atom
-    vector <int> residueNumbers; //contains the number of the residue for every atom in the system
-    vector< vector <string> > moleculetypeAtomNames; //contains the name of the atom for every moleculetype and every atom
-    vector <string> atomNames; //contains the name of every atom in the system
-    vector <string> belongsToMolecule; //the name of the molecule each atom belongs to
-    vector< vector<float> >  moleculetypemasses; //masses for each moleculetype
-    vector< vector<int> >  moleculetypebackbone; //backboneatoms for each moleculetype
-    vector<float> masses; //diagonal of the mass matrix of the system
-    vector <int> backbone; //backbone atoms in the system
-    vector <string> backboneAtomNames; //names of the atomtypes of the backbone for building phase angles from dihedrals, which is done in BAT_trajectory.cpp
-    vector< vector <int> > roots; //root atoms for all molecules in the system. root atoms need to be connected root[0] to root[1] and root[1] to root[2]. root[0] needs to be terminal, root[1] needs to be connected only to root[1] and terminal atoms. root[2] needs to be connected to non-terminal atoms.
-
-    long int current;
-    long int total_atoms;
-    unsigned short int newclustflag,newclustmassflag,newclustatomflag,newclustbackboneflag;
-    string top_dir, top_file;
-
-    unsigned short int add_bond(int atom1, int atom2) {
+unsigned short int Topology::add_bond(int atom1, int atom2) {
         //for a new [ moleculetype ], fill in the (preallocated) first 2 atoms to the current "moleculetypes" vector and the (preallocated) first bond to the current "moleculetypebonds" vector
         if(newclustflag==1) {
             moleculetypes[current][0]=atom1;
@@ -126,11 +99,11 @@ public:
             }
         }
         return 0;
-    }
+}
 
 
 
-    unsigned short int add_mass(float mass) {
+    unsigned short int Topology::add_mass(float mass) {
         //for a new [ moleculetype ], create a new massvector filled with the first atommass and add it to the "moleculetypemasses" vector
         if(newclustmassflag==1) {
             vector<float> tmpvec;
@@ -146,12 +119,12 @@ public:
     }
 
 
-    unsigned short int add_atom(string resname, int resnumber, string atomname) {
+    unsigned short int Topology::add_atom(std::string resname, int resnumber, std::string atomname) {
         //for a new [ moleculetype ], create new vectors filled with the first values and add them to the moleculetype vectors
         if(newclustatomflag==1) {
-            vector<string> tmpvec1;
+            vector<std::string> tmpvec1;
             vector<int> tmpvec2;
-            vector<string> tmpvec3;
+            vector<std::string> tmpvec3;
             tmpvec1.push_back(resname);
             tmpvec2.push_back(resnumber);
             tmpvec3.push_back(atomname);
@@ -171,7 +144,7 @@ public:
 
 
 
-    unsigned short int add_backbone(int atom) {
+    unsigned short int Topology::add_backbone(int atom) {
         //for a new [ moleculetype ], fill in the (preallocated) atom to the current "moleculetypebackbone" vector
         if(newclustbackboneflag==1) {
             moleculetypebackbone[current][0]=atom;
@@ -186,7 +159,7 @@ public:
 
 
 
-    void new_moleculetype(string mol) {
+    void Topology::new_moleculetype(std::string mol) {
 
         //set up the necessary flags and prolong the vectors (initialized with dummy values) for taking up a new molecule. Also increase the "current" counter;
         moleculetypenames.push_back(mol);
@@ -212,10 +185,27 @@ public:
 
 
 
-    int sort() {
+    int Topology::sort() {
         int offset=0;
         unsigned short int found=0;
         vector<int> clusterout;
+        vector <unsigned int> moleculetypenamesnumber;
+        vector <unsigned int> moleculetypenamescounter;
+      
+        
+      
+      //first check if any molculetype is present more than one time for indexing the moleculenames
+        for(unsigned int i=0; i<moleculetypenames.size(); i++) {
+          int counter=0;
+          for(unsigned int j=0; j<moleculenames.size(); j++) {
+            if(moleculetypenames[i]==moleculenames[j]) {
+              counter++;
+              }
+            }
+            moleculetypenamesnumber.push_back(counter);
+            moleculetypenamescounter.push_back(1);
+          }            
+      
 
 
         //according to the [ molecules ] section, join the necessary arrays accordingly
@@ -245,9 +235,14 @@ public:
                         residues.push_back(moleculetypeResidues[j][k]);
                         residueNumbers.push_back(moleculetypeResidueNumbers[j][k]);
                         atomNames.push_back(moleculetypeAtomNames[j][k]);
-                        belongsToMolecule.push_back(moleculenames[i]);
+                        if(moleculetypenamesnumber[j]<=1){
+                          belongsToMolecule.push_back(moleculenames[i]);
+                        }
+                        else{
+                          belongsToMolecule.push_back(moleculenames[i]+string("_")+to_string(moleculetypenamescounter[j]));//if there is more than one molecule of this moleculetype add an index
+                        }
                     }
-
+                    moleculetypenamescounter[j]++;//increase the index for this moleculetype
 
                     offset+=moleculetypes[j].size(); //increase the offset by the number of atoms in the just processed moleculetype
                     found=1;
@@ -260,17 +255,21 @@ public:
             }
             total_atoms=offset;
         }
+        
+
+        
+        
         return 0;
     }
 
 
 
-    string get_dir_file(string file) {
+    std::string Topology::get_dir_file(std::string file) {
         //returns the directory in a path to a file
         size_t found = file.find('/');
-        if (found!=string::npos) {
+        if (found!=std::string::npos) {
             size_t found_old;
-            while(found!=string::npos) {
+            while(found!=std::string::npos) {
                 found_old=found;
                 found = file.find('/',found+1);
             }
@@ -278,13 +277,13 @@ public:
             return file;
         }
         else {
-            return string("./");
+            return std::string("./");
         }
     }
 
 
 
-    unsigned short int check_comment(string line) {
+    unsigned short int Topology::check_comment(std::string line) {
         //search for the first non-blank character in the line, if it is ";" return 1, otherwise return 0. If all characters are blanks, return 2.
         for(unsigned int i=0; i<line.length(); i++) {
             if(line[i]!=' ') {
@@ -301,8 +300,8 @@ public:
 
 
 
-    int preprocess(string infile,stringstream* myVirtualOFile) {
-        string line,tmpstr="",tmpstr2="",mytop_dir=get_dir_file(infile);
+    int Topology::preprocess(std::string infile,std::stringstream* myVirtualOFile) {
+        std::string line,tmpstr="",tmpstr2="",mytop_dir=get_dir_file(infile);
         char c1[1000],c2[1000];
         int found;
 
@@ -327,12 +326,12 @@ public:
             sscanf (line.c_str(),"%s %s",c1,c2);
 
             //check if the line is an include directive
-            if(string(c1)=="#include") {
+            if(std::string(c1)=="#include") {
                 found=0;
 
                 //remove the quotation marks and check if the file is present in the same directory as the topology file
                 tmpstr=mytop_dir;
-                tmpstr2=string(c2);
+                tmpstr2=std::string(c2);
                 tmpstr2.erase(tmpstr2.begin());
                 tmpstr2.erase(tmpstr2.end()-1);
                 tmpstr+=tmpstr2;
@@ -361,7 +360,7 @@ public:
                     //if the file wasn't found issue a warning
                     if(check_comment(line)==0) {
                         (*myVirtualOFile)<<line<<endl;
-                        cerr<<"WARNING FROM PREPROCESSOR: file "<<tmpstr2<<"   "<<(found==1 ? " found ":string(" NOT FOUND locally or at ")+tmpstr)<<". If the file does not contain any bond-structure information of your molecule(s), this should be fine.\n";
+                        cerr<<"WARNING FROM PREPROCESSOR: file "<<tmpstr2<<"   "<<(found==1 ? " found ":std::string(" NOT FOUND locally or at ")+tmpstr)<<". If the file does not contain any bond-structure information of your molecule(s), this should be fine.\n";
                     }
                 }
 
@@ -380,7 +379,7 @@ public:
 
 
 
-    int read_topology() {
+    int Topology::read_topology() {
 
         //set all [ section ] flags to false;
         unsigned short int atomsflag=0;
@@ -400,16 +399,16 @@ public:
 
 
         //preprocess the topology file to write a virtual file myVirtualFile
-        stringstream myVirtualFile(string(""));
+        stringstream myVirtualFile(std::string(""));
         preprocess(top_file,&myVirtualFile);
-        string line, line_in;
+        std::string line, line_in;
 
         while ( getline(myVirtualFile,line_in) ) {
             line=strip_line(line_in);
             if(moleculetypeflag==1&&line[0]!='['&&line[0]!='#') {
                 if(check_comment(line)==0) {  //if a new [ moleculetype ] section is encountered,
                     sscanf (line.c_str(),"%s %d",c1,&n2);
-                    new_moleculetype(string(c1));//create that moleculetype
+                    new_moleculetype(std::string(c1));//create that moleculetype
                     //and check if the previous [ moleculetype ] section had exactly one [ atoms ] and [ bonds ] section
                     if(hasAtoms==0) {
                         cerr<<"ERROR: NO \"[ atoms ]\" SECTION FOUND FOR MOLECULETYPE "<<moleculetypenames[current-1]<<" IN (PREPROCESSED) TOPOLOGY FILE \""<<top_file<<"\"!\n";
@@ -478,7 +477,7 @@ public:
                 if(check_comment(line)==0) { //add every moleculename in the [ molecules ] section to "moleculenames", taking care of how often the molecule is present
                     sscanf (line.c_str(),"%s %d",c1,&n2);
                     for(int i=0; i<n2; i++) {
-                        moleculenames.push_back(string(c1));
+                        moleculenames.push_back(std::string(c1));
                     }
 
                     //and check if the previous [ moleculetype ] section had exactly one [ atoms ] and [ bonds ] section
@@ -549,7 +548,7 @@ public:
 
 
 
-    void make_bonds_table() {
+    void Topology::make_bonds_table() {
         vector< vector <int> > dummyvec;
         vector <int> dummyvec1;
         dummyvec1.push_back(0);
@@ -577,7 +576,7 @@ public:
 
 
 
-    void get_roots() {
+    void Topology::get_roots() {
         int counter;
         int sav;
         int improperscounter;
@@ -591,26 +590,97 @@ public:
 
         for (unsigned int i=0; i<molecules.size(); i++) { //find root atoms for all molecules
             lowestimpropers=molecules[i].size()+1; //find the roots which have the lowest number of (terminal) atoms connected to the middle root atom. (These account for the improper dihedrals)
+													tmproots[0]=0;
+													tmproots[1]=0;
+             tmproots[2]=0;
+             tmproots[3]=molecules[i].size();//this will carry over the information about moleculesizes to BAT_topology.cpp
+            for (int min_counter=1; min_counter<=2; min_counter++) {//min_counter==1 would be the canonical build, min_counter==2 provides a backup if only root atom sets with more than one non-terminal atoms attached to roots[i][1] can be found, e. g. for cyclic termini.
+												for (unsigned int j=0; j<molecules[i].size(); j++) { //for all atoms in the molecule
+																if(bonds_table[molecules[i][j]-1].size()==1) { //if the atom is terminal
+																				counter=0;//set up a counter for the non-terminal atoms connected to roots[i][1]
+																				improperscounter=-1; //to count the terminal atoms connected to roots[i][1] (roots[i][0] is not considered an improper: 0->-1)
+																				sav=-1; //to remember roots[i][2]
+																				for(unsigned int k=0; k<bonds_table[bonds_table[molecules[i][j]-1][0][0]-1].size(); k++) {
+																								if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()>1) {
+																												counter++;    //count the non-terminal atoms connected to roots[i][1] and remember one of them
+																												sav=bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0];
+																									}
+																								if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()==1) {
+																												improperscounter++;   //count the terminal atoms connected to roots[i][1]
+																									}
+																					}
+																				if((counter==min_counter)&&(improperscounter<lowestimpropers)) { // if there is/are exactly "min_counter" non-terminal atom(s) connected to roots[i][1] and the amount of terminal atoms connected to roots[i][1] is smaller than for previous found root sets
+																								lowestimpropers=improperscounter; //set the new goal for undercutting in the amount of terminal atoms connected to roots[i][1]
+																								tmproots[0]=molecules[i][j]; //temporarily use the terminal atom t roots[i][0]
+																								tmproots[1]=bonds_table[molecules[i][j]-1][0][0]; //temporarily use the only atom connected to the terminal atom as roots[i][1]
+																								tmproots[2]=sav;//Temporarilly use the (last, in case of min_counter==2) saved non-terminal atom as roots[i][2]
+																				}
+																	}
+												}
+												if((tmproots[0]==0)||(tmproots[1]==0)||(tmproots[2]==0)) { //if one of the temporary root atoms is still 0 quit
+																if (min_counter<2) continue; //Try again without the restriction that only one non-terminal atom can be connected to roots[i][1], e. g. for cyclic termini.
+																cerr<<"ERROR: COULD NOT FIND ROOT ATOMS FOR MOLECULE "<<i+1<<".\n";
+																exit(EXIT_FAILURE);
+												}
+												else {
+																if(min_counter==2){
+																		cerr<<"WARNING: COULD NOT FIND A CANONICAL ROOT ATOM SET FOR MOLECULE "<<i<<". USING A DIHEDRAL ANGLE WITHOUT A PHYSICAL BONDS BASIS.\n";
+																	}
+																roots.push_back(tmproots); //else add these temporary root atoms as root atoms for molecule i
+																break;
+													}
+									}
+					}
+	}
+    
+        void Topology::get_roots_override(double perc) {
+        int counter;
+        int sav;
+        int improperscounter;
+        int lowestimpropers;
+        vector <int> tmproots;
+        vector <int> tmproots1;
+        vector < vector <int> > savtmproots;
+        unsigned int tmpRootsChosen=0;
+
+        tmproots.push_back(0);
+        tmproots.push_back(0);
+        tmproots.push_back(0);
+        tmproots.push_back(0);
+        tmproots1.push_back(0);
+        tmproots1.push_back(0);
+        tmproots1.push_back(0);
+        tmproots1.push_back(0);
+
+        for (unsigned int i=0; i<molecules.size(); i++) { //find root atoms for all molecules
+            savtmproots.clear();
+						lowestimpropers=molecules[i].size()+1; //find the roots which have the lowest number of (terminal) atoms connected to the middle root atom. (These account for the improper dihedrals)
             tmproots[0]=0;
             tmproots[1]=0;
             tmproots[2]=0;
             tmproots[3]=molecules[i].size();//this will carry over the information about moleculesizes to BAT_topology.cpp
-            for (int min_counter=1; min_counter<=2; min_counter++) {
-                for (unsigned int j=0; j<molecules[i].size(); j++) { //for all atoms in the molecule
-                    if(bonds_table[molecules[i][j]-1].size()==1) { //if the atom is terminal
-                        counter=0;//set up a counter for the non-terminal atoms connected to roots[i][1]
-                        improperscounter=-1; //to count the terminal atoms connected to roots[i][1] (roots[i][0] is not considered an improper: 0->-1)
-                        sav=-1; //to remember roots[i][2]
-                        for(unsigned int k=0; k<bonds_table[bonds_table[molecules[i][j]-1][0][0]-1].size(); k++) {
-                            if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()>1) {
-                                counter++;    //count the non-terminal atoms connected to roots[i][1] and remember one of them
-                                sav=bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0];
-                            }
-                            if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()==1) {
-                                improperscounter++;   //count the terminal atoms connected to roots[i][1]
-                            }
+            tmproots1[3]=molecules[i].size();
+            for (unsigned int j=0; j<molecules[i].size(); j++) { //for all atoms in the molecule
+                if(bonds_table[molecules[i][j]-1].size()==1) { //if the atom is terminal
+                    counter=0;//set up a counter for the non-terminal atoms connected to roots[i][1]
+                    improperscounter=-1; //to count the terminal atoms connected to roots[i][1] (roots[i][0] is not considered an improper: 0->-1)
+                    sav=-1; //to remember roots[i][2]
+                    for(unsigned int k=0; k<bonds_table[bonds_table[molecules[i][j]-1][0][0]-1].size(); k++) {
+                        if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()>1) {
+                            counter++;    //count the non-terminal atoms connected to roots[i][1] and remember one of them
+                            sav=bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0];
                         }
-                        if((counter==min_counter)&&(improperscounter<lowestimpropers)) { // if there is/are exactly "min_counter" non-terminal atom(s) connected to roots[i][1] and the amount of terminal atoms connected to roots[i][1] is smaller than for previous found root sets
+                        if(bonds_table[bonds_table[bonds_table[molecules[i][j]-1][0][0]-1][k][0]-1].size()==1) {
+                            improperscounter++;   //count the terminal atoms connected to roots[i][1]
+                        }
+                    }
+                    if(counter==1){
+                        tmproots1[0]=molecules[i][j]; //temporarily use the terminal atom t roots[i][0]
+                        tmproots1[1]=bonds_table[molecules[i][j]-1][0][0]; //temporarily use the only atom connected to the terminal atom as roots[i][1]
+                        tmproots1[2]=sav; //since counter is 1, only 1 atom connected to tmproots[1] is non-terminal. Temporarilly use this atom as roots[i][2]
+                        savtmproots.push_back(tmproots1);
+                        if(improperscounter<lowestimpropers){ // if there is exactly one non-terminal atom connected to roots[i][1] and the amount of terminal atoms connected to roots[i][1] is smaller than for previous found root sets
+                            tmpRootsChosen=savtmproots.size();
                             lowestimpropers=improperscounter; //set the new goal for undercutting in the amount of terminal atoms connected to roots[i][1]
                             tmproots[0]=molecules[i][j]; //temporarily use the terminal atom t roots[i][0]
                             tmproots[1]=bonds_table[molecules[i][j]-1][0][0]; //temporarily use the only atom connected to the terminal atom as roots[i][1]
@@ -618,19 +688,27 @@ public:
                         }
                     }
                 }
-                if((tmproots[0]==0)||(tmproots[1]==0)||(tmproots[2]==0)) { //if one of the temporary root atoms is still 0 quit
-                    if (min_counter<2) continue;
-                    cerr<<"ERROR: COULD NOT FIND ROOT ATOMS FOR MOLECULE "<<i+1<<".\n";
-                    exit(EXIT_FAILURE);
+            }
+            if((tmproots[0]==0)||(tmproots[1]==0)||(tmproots[2]==0)) { //if one of the temporary root atoms is still 0 quit
+                cerr<<"ERROR: COULD NOT FIND ROOT ATOMS FOR MOLECULE "<<i+1<<".\n";
+                exit(EXIT_FAILURE);
+            }
+            else {//else add these temporary root atoms as root atoms for molecule i
+                cout<<"Molecule: "<<i<<endl;
+                cout<<"Automatically chosen roots set: "<<tmpRootsChosen<<endl;
+                cout<<"Available roots sets: "<<savtmproots.size()<<endl;
+                if((i==0)&&(molecules.size()>1)){
+                    roots.push_back(tmproots); 
                 }
-                else {
-                    roots.push_back(tmproots); //else add these temporary root atoms as root atoms for molecule i
-                    break;
+                else{//override everything else but the first molecule in a complex
+                    unsigned int my_override = (unsigned int)(savtmproots.size()*perc);
+                    if(my_override == tmpRootsChosen) my_override++;
+                    if(my_override > savtmproots.size()){cerr<<"ERROR: OVERRIDING ROOT ATOMS WITH TOO LARGE NUMBER("<<my_override<<").\n";exit(EXIT_FAILURE);}
+                    //my_override=tmpRootsChosen;
+                    cout<<"Overridden roots set: "<<my_override<<endl;
+                    roots.push_back(savtmproots[my_override-1]); 
                 }
             }
         }
     }
 
-
-
-};

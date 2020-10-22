@@ -1,4 +1,4 @@
-//    BAT_builder, a program to convert a molecular dynamics trajectory from Cartesian to internal bond-angle-torsion coordinates
+//   Class for BAT_builder, a program to convert a molecular dynamics trajectory from Cartesian to internal bond-angle-torsion coordinates
 //    Copyright (C) 2015  Markus Fleck (member of the laboratory of Bojan Zagrovic, University of Vienna)
 //
 //    This program is free software: you can redistribute it and/or modify
@@ -30,12 +30,23 @@
 
 
 
+
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+
+#include "../util/io/io.h"
+#include "BAT_topology.h"
+
+
+
+
 using namespace std;
 
-class BAT_Topology {
 
-public:
-    BAT_Topology(vector< vector< vector <int> > > *bonds_table_in, vector <int> *backboneIN, vector< vector <int> > *roots_in) {
+
+
+    BAT_Topology::BAT_Topology(vector< vector< vector <int> > > *bonds_table_in, vector <int> *backboneIN, vector< vector <int> > *roots_in) {
 
         bonds_table=*bonds_table_in;
         backbone=*backboneIN;
@@ -70,21 +81,13 @@ public:
 
     };
 
-    vector< vector< vector <int> > > bonds_table; //contains a list of all bonds in the system with proper offset, with bonds_table[#atom-1][#bond-1][0] the bonded atom and bonds_table[atom-1][#bond-1][1] the type of the bond (0==physical, 1==pseudo)
-    vector< vector <int> > roots; //contains the root atoms for every molecule in the system
-    vector< vector <int> > dihedrals; //contains a list of all dihedrals found
-    vector <int> backbone; //contains a list of the backbone atoms in the system
-    bool *isBackbone;
-    int *map_BAT_to_real;
-    int *map_real_to_BAT;
-
-    int current_BAT;//counter for the next BAT number to be assigned
 
 
-    void do_mapping_depth_first() {
+    void BAT_Topology::do_mapping_depth_first() {
         //for all molecules
         for(unsigned int i=0; i<roots.size(); i++) {
-            //the atom numbers of the root atoms correspond to the first three BAT numbers in the current molecule
+			int offset=current_BAT;
+			//the atom numbers of the root atoms correspond to the first three BAT numbers in the current molecule
             map_BAT_to_real[current_BAT-1]=roots[i][0];
             map_BAT_to_real[current_BAT]=roots[i][1];
             map_BAT_to_real[current_BAT+1]=roots[i][2];
@@ -96,10 +99,14 @@ public:
 
             add_node_recursive(roots[i][1]); //add the impropers for molecule i
             add_node_recursive(roots[i][2]); //branch from roots[i][2] for molecule i
+            if(current_BAT-offset!=roots[i][3]){//roots[j][3] contains the molecule's number of atoms
+                cerr<<"ERROR BUILDING BAT TOPOLOGY. THE TOPOLOGY (MOLECULETYPE) OF MOLECULE NUMBER "<<i<<" IS NOT FULLY CONNECTED BY COVALENT BONDS (2 OR MORE MOLECULES?). QUITTING."<<endl;
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
-    void add_node_recursive(int real_node) {
+    void BAT_Topology::add_node_recursive(int real_node) {
         //for all atoms connected to real_node
         for(unsigned int i=0; i<bonds_table[real_node-1].size(); i++) {
             //if the connected atom was not yet assigned a BAT number (and the bond is physical)
@@ -115,12 +122,13 @@ public:
         }
     }
 
-    void do_mapping_breadth_first() {
+    void BAT_Topology::do_mapping_breadth_first() {
         vector <int> to_be_processed;
         vector <int> to_be_processed_tmp;
 
         for(unsigned int j=0; j<roots.size(); j++) {
-            //the atom numbers of the root atoms correspond to the first three BAT numbers in the current molecule
+													int offset=current_BAT;
+													//the atom numbers of the root atoms correspond to the first three BAT numbers in the current molecule
             map_BAT_to_real[current_BAT-1]=roots[j][0];
             map_BAT_to_real[current_BAT]=roots[j][1];
             map_BAT_to_real[current_BAT+1]=roots[j][2];
@@ -146,10 +154,14 @@ public:
                 //update the to_be_processed list
                 to_be_processed=to_be_processed_tmp;
             }
-        }
+        if(current_BAT-offset!=roots[j][3]){//roots[j][3] contains the molecule's number of atoms
+												cerr<<"ERROR BUILDING BAT TOPOLOGY. THE TOPOLOGY (MOLECULETYPE) OF MOLECULE NUMBER "<<j<<" IS NOT FULLY CONNECTED BY COVALENT BONDS (2 OR MORE MOLECULES?). QUITTING."<<endl;
+            exit(EXIT_FAILURE);
+								}
+							}
     }
 
-    void add_node_breadth(int real_node, vector <int> *to_be_processed_in) {
+    void BAT_Topology::add_node_breadth(int real_node, vector <int> *to_be_processed_in) {
         //delete real node from the to_be_processed_in list
         for(unsigned int i=0; i<(*to_be_processed_in).size(); i++) {
             if(real_node== (*to_be_processed_in)[i]) {
@@ -172,7 +184,7 @@ public:
     }
 
 
-    int find_closest_bond(int real_node, vector<int> exclude_list) {
+    int BAT_Topology::find_closest_bond(int real_node, vector<int> exclude_list) {
         int closest=int(bonds_table.size()+1);
         int flag;
         //for all atoms bonded to real_node
@@ -201,7 +213,7 @@ public:
     }
 
 
-    void create_BAT() {
+    void BAT_Topology::create_BAT() {
         //set up a temporary array
         vector<int> dummydihedral;
         dummydihedral.push_back(0);
@@ -279,7 +291,7 @@ public:
 
     }
 
-    void add_phases()
+    void BAT_Topology::add_phases()
     {
         vector <int> excludes;
         vector <int> dummyvec;
@@ -370,7 +382,3 @@ public:
         }
 
     }
-
-
-
-};

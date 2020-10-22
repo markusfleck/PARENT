@@ -28,13 +28,21 @@ obj/io.o : obj/io_binary.o obj/io_text.o | obj
 # the utility library of the PARENT suite:
 obj/util.o : src/util/util.cpp src/util/util.h | obj
 	g++ -c src/util/util.cpp -o obj/util.o $(COPS)
-	
+
+obj/topology.o: src/BAT_builder/topology.cpp src/BAT_builder/topology.h | obj
+	g++ -c -std=c++11 src/BAT_builder/topology.cpp -o obj/topology.o $(COPS)
+
+obj/BAT_topology.o: src/BAT_builder/BAT_topology.cpp src/BAT_builder/BAT_topology.h | obj
+	g++ -c src/BAT_builder/BAT_topology.cpp -o obj/BAT_topology.o $(COPS)
+
+obj/BAT_trajectory.o: src/BAT_builder/BAT_trajectory.cpp src/BAT_builder/BAT_trajectory.h | obj
+	g++ -c src/BAT_builder/BAT_trajectory.cpp -o obj/BAT_trajectory.o $(COPS)
 
 # this program converts the GROMACS .xtc and .top files to a binary .bat file in bond-angle-torsion coordinates
-exec/BAT_builder.x : src/util/io/xdrfile/xdrfile.c src/util/io/xdrfile/xdrfile_xtc.c src/util/io/xdrfile/xdrfile.h src/util/io/xdrfile/xdrfile_xtc.h src/BAT_builder/bat.cpp src/BAT_builder/bat.h src/BAT_builder/topology.cpp src/BAT_builder/BAT_topology.cpp src/BAT_builder/BAT_trajectory.cpp obj/io.o src/util/io/io.h src/util/io/io_binary.h src/util/io/io_text.h | obj exec
+exec/BAT_builder.x : src/util/io/xdrfile/xdrfile.c src/util/io/xdrfile/xdrfile_xtc.c src/util/io/xdrfile/xdrfile.h src/util/io/xdrfile/xdrfile_xtc.h src/BAT_builder/bat.cpp obj/io.o obj/topology.o obj/BAT_topology.o obj/BAT_trajectory.o obj/util.o | obj exec
 	gcc -c src/util/io/xdrfile/xdrfile.c -o obj/xdrfile.o
 	gcc -c src/util/io/xdrfile/xdrfile_xtc.c -o obj/xdrfile_xtc.o
-	g++ src/BAT_builder/bat.cpp obj/xdrfile.o  obj/xdrfile_xtc.o obj/io.o -o exec/BAT_builder.x $(COPS)
+	g++ src/BAT_builder/bat.cpp obj/xdrfile.o  obj/xdrfile_xtc.o obj/io.o obj/topology.o obj/BAT_topology.o obj/BAT_trajectory.o  obj/util.o -o exec/BAT_builder.x $(COPS)
 
 
 # the "main" program: calculates the entropy terms from the .bat file and puts out a binary .par file

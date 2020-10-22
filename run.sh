@@ -32,8 +32,8 @@ cd ${OUTDIR} >> ${OUTDIR}/log.txt 2>&1
 
 
 
-# Run the conversion to bond-angle-torsion coordinates (program BAT_builder.x), specifying the .top input file, the .xtc input file, the name of the output file, the name of the backbone atoms (as in the .top file) and request storage in double precision
-../exec/BAT_builder.x ../${TOP} ../${TRJ} ${NAME}.bat "${BACKBONE_ATOMS}" double_precision >> log.txt 2>&1
+# Run the conversion to bond-angle-torsion coordinates (program BAT_builder.x), specifying the .top input file, the .xtc input file, the name of the output file, the name of the backbone atoms (as in the .top file)
+../exec/BAT_builder.x -t ../${TOP} -x ../${TRJ} -o ${NAME}.bat -bb "${BACKBONE_ATOMS}" >> log.txt 2>&1
 
 # Run the calculation of the entropy terms (program PARENT.x) specifying the input .bat file, the output .par file and the number of bins for bonds, angles and dihedrals (torsions)  in 1D and 2D for building the histograms
 # Depending on the architecture of your cluster/workstation as well as your Open MPI version, you might want to change the mpirun parameters. Especially if you are using InfiniBand you might want to change "tcp" to "openib"

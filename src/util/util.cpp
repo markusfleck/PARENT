@@ -32,6 +32,18 @@
 
 #include "util.h"
 
+char *getCmdOption(char **begin, char **end, const string &option) {
+  char **itr = find(begin, end, option);
+  if (itr != end && ++itr != end) {
+    return *itr;
+  }
+  return 0;
+}
+
+bool cmdOptionExists(char **begin, char **end, const string &option) {
+  return find(begin, end, option) != end;
+}
+
 double get_mutual(int type,int index1, int index2,int nDihedrals, double* bondsEntropy1D, double* anglesEntropy1D, double* dihedralsEntropy1D, double* bbEntropy, double* baEntropy, double* bdEntropy, double* aaEntropy, double* adEntropy, double* ddEntropy) {
     int smaller,bigger,index;
     int nBonds=nDihedrals+2;
