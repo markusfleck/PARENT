@@ -39,7 +39,8 @@ results generated using this program or modifications of it.
   information terms, they are in "output/PARENT_suite_MIE.txt", with their indexing in
   "output/PARENT_suite_MIE_topology.txt".
   
-  Calculation should take something like 2-5 minutes, resulting values at the end of the
+  If you run the code for testing purposes without any modifications,
+  the calculation should take something like 2-5 minutes. The resulting values at the end of the
   files should match those in "test_system/sample_output".
 	 
   If you get permission errors that means that your program has resided (or still resides) on a
@@ -60,8 +61,8 @@ results generated using this program or modifications of it.
   This code uses MPI as well as openMP parallelization, so you need to make
   sure that your system supports this. The code was developed and tested 
   in a GNU/Linux environment using Open MPI version 1.7.4 as a MPI implementation 
-  and gcc version 4.8.2 as a compiler, but different versions/compilers might work 
-  just as well.
+  and gcc version 4.8.2 as a compiler, but different versions/compilers should work 
+  just as well given my experience over the years.
   
   Sample trajectory and topology files are shipped with this package.
   To check out if your system correctly compiles and runs all of the provided
@@ -101,13 +102,17 @@ results generated using this program or modifications of it.
   You should get no output at all here. If you do get output, first check if the files 
   "compare_MIE.txt" and "compare_MIST.txt" do exist in your top directory and 
   are non-empty. If this is not the case, check the file output/log.txt for further hints
-  on what went wrong. If however, the files only show minor numerical differences 
+  on what went wrong. If however you are using more exotic hardware and the files only show minor numerical differences 
   to "test_system/sample_output/sample_output_MIE.txt" and 
   "test_system/sample_output/sample_output_MIST.txt" respectively,
   this might well be due to machine precision and therefore be perfectly okay.
   Generally perform multiple of these tests and check that you are constantly getting 
   the same results. If this is not the case, that means that your system is not executing 
-  the code in a proper manner (run condition).
+  the code in a proper manner (run condition). 
+  
+  With that said, I have been using the code now for five years and never observed any deviations from
+  previously calculated results. Neither on a XEON cluster, a Threadripper CPU nor even on
+  a Raspberry Pi using ARM architecture.
   
   After executing the "run.sh" script, the compiled executables are located in the folder
   "exec". If this is not the case, you should check the file "output/log.txt" to see what went wrong.
@@ -198,7 +203,7 @@ Furthermore additional information is attached to the header of the resulting .b
 
 The program is used in the following manner:
 
-	./BAT_builder.x input.top input.xtc output.bat "BackboneAtomName1 BackboneAtomName2 ..." [double_precision]
+	./BAT_builder.x -t input.top -x input.xtc -o output.bat -bb "BackboneAtomName1 BackboneAtomName2 BackboneAtomName3 ..." [--single_precision]
 
 input.top, input.xtc and output.bat are self-explanatory.
 
@@ -213,7 +218,7 @@ which is recommended, since all calculation is done in double precision anyway. 
 
 Additionally, the program can perform a back-conversion from .bat to .xtc, which is done by issuing the following command:
 
-	./BAT_builder.x input.bat output.xtc
+	./BAT_builder.x -b input.bat -o output.xtc
 
 
 When the trajectory of a complex consisting of more than one molecule is converted, non-physical bonds (termed pseudo-bonds)
@@ -239,8 +244,8 @@ configurational entropy using MIE for large, biologically realistic molecules, c
 Calculation time is scaling quadratically with the number of atoms. 
 
 PARENT.x takes a .bat file as an input. Make sure that you provide (in total, from all compute nodes) reasonably more RAM 
-than the size of the .bat file, otherwise Linux uses the hard-disk for temporary storage, which slows down the calculation considerably.
-In the worst case scenario, the program might crash due to memory shortage without a warning.
+than the size of the .bat file, otherwise Linux uses the hard-disk for temporary storage, which in the best case slows down the calculation considerably.
+In the worst case scenario, the program might be killed due to memory shortage or crash without a warning.
 
 
 The program is used in the following manner:
