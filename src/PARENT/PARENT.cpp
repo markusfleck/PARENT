@@ -52,6 +52,8 @@
 
 #define MASTER 0
 
+#define RC_ABORT 1
+
 #define DUMMY_TAG 0
 #define COMMUNICATE_PARAMETERS_TAG 1
 #define DISTRIBUTE_BONDS_TAG 2
@@ -97,7 +99,7 @@ int main(int argc, char *argv[])  {
     float floatdummyarray[3][3];
     double doubledummyarray[3];
 
-    int numProcesses, rank, rc,len,threadLevelProvided, threadLevelClaimed;
+    int numProcesses, rank, len,threadLevelProvided, threadLevelClaimed;
     int tmpInt;
 
     double **bondsChunk, **anglesChunk, **dihedralsChunk;
@@ -128,10 +130,11 @@ int main(int argc, char *argv[])  {
     MPI_Status Stat;
     MPI_Init_thread(&argc,&argv, MPI_THREAD_SERIALIZED, &threadLevelProvided );
     MPI_Query_thread( &threadLevelClaimed );
+
     if(threadLevelClaimed !=threadLevelProvided)
     {
         printf( "Claimed thread level=%d, but got thread level=%d, aborting\n", threadLevelClaimed , threadLevelProvided );
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
@@ -203,31 +206,31 @@ int main(int argc, char *argv[])  {
             }
             if((strcmp(type1,"bat"))||(strcmp(type2,"par"))) {
                 cerr<<"USAGE: "<<argv[0]<<" input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D\n";    //check for the extensions of the input and output file
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[3],"%d",&bDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D bonds from command line! Aborting"<<endl;    //read the number of bins for the 1D-bond calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[4],"%d",&aDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D angles from command line! Aborting"<<endl;    //read the number of bins for the 1D-angle calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[5],"%d",&dDens1D)!=1) {
                 cerr<<"ERROR: Could not read number of bins for 1D dihedrals from command line! Aborting"<<endl;    //read the number of bins for the 1D-dihedral calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[6],"%d",&bDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D bonds from command line! Aborting"<<endl;    //read the number of bins for the 2D-bond calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[7],"%d",&aDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D angles from command line! Aborting"<<endl;    //read the number of bins for the 2D-angle calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             if(sscanf(argv[8],"%d",&dDens)!=1) {
                 cerr<<"ERROR: Could not read number of bins (in one dimension => sqrt(nBins2D)) for 2D dihedrals from command line! Aborting"<<endl;    //read the number of bins for the 2D-dihedral calculation and check for correctness
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
 
             //determine the highest (and second highest) number of 2D bins used to avoid reallocations later on
@@ -237,7 +240,7 @@ int main(int argc, char *argv[])  {
         }
         else {
             cerr<<"USAGE: "<<argv[0]<<" input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D\n";
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
     }
 
@@ -263,17 +266,17 @@ int main(int argc, char *argv[])  {
         par_file.open(argv[2],ios::binary | ios::out);
         if(!(infile.is_open())) {
             cerr<<"ERROR: Could not open file "<<argv[1]<<" ! Aborting."<<endl;
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
         if(!(par_file.is_open())) {
             cerr<<"ERROR: Could not open file "<<argv[2]<<" ! Aborting."<<endl;
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
 
         //and reads the header of the trajectory
         if(read_BAT_header(&infile,&double_prec,&numFrames,&dihedrals_top,&masses,&residues,&residueNumbers,&atomNames,&belongsToMolecule)!=0) {
             cerr<<"AN ERROR HAS OCCURED WHILE READING THE HEADER OF THE FILE " <<argv[1]<<" . QUITTING PROGRAM.\n";
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
         nDihedrals=dihedrals_top.size();
         cout<<argv[1]<<" specs:"<<endl;
@@ -282,7 +285,7 @@ int main(int argc, char *argv[])  {
         //and writes the header of the output (.par) file
         if(write_PAR_header(&par_file,nDihedrals,double_prec,numFrames,&dihedrals_top, &masses,bDens1D,aDens1D,dDens1D,bDens,aDens,dDens, &residues,&residueNumbers,&atomNames,&belongsToMolecule)!=0) {
             cerr<<"AN ERROR HAS OCCURED WHILE WRITING THE HEADER OF THE FILE " <<argv[2]<<" . QUITTING PROGRAM.\n";
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
     }
     //~ numFrames=10;   //<------------------------------------------------- uncomment for developing purposes
@@ -299,7 +302,7 @@ int main(int argc, char *argv[])  {
     tmpArray=(double*)malloc(numFrames*sizeof(double));
     if(tmpArray==NULL) {
         cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
     if(rank==MASTER) {
         //on the master side to store the 1D entropy results
@@ -321,7 +324,7 @@ int main(int argc, char *argv[])  {
         tmpDihedralsMaster=(double*)malloc(nDihedrals*sizeof(double));
         if((bondsEntropy1DMaster==NULL)||(anglesEntropy1DMaster==NULL)||(dihedralsEntropy1DMaster==NULL)||(bbEntropy==NULL)||(baEntropy==NULL)||(bdEntropy==NULL)||(aaEntropy==NULL)||(adEntropy==NULL)||(ddEntropy==NULL)||(tmpBondsMaster==NULL)||(tmpAnglesMaster==NULL)||(tmpDihedralsMaster==NULL)) {
             cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-            MPI_Abort(MPI_COMM_WORLD, rc);
+            MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
         }
     }
 
@@ -352,7 +355,7 @@ int main(int argc, char *argv[])  {
     fail=fail||(bondsEntropy1D==NULL);
     if(fail!=0) {
         cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
 
     //proceed analogously for the angles
@@ -379,7 +382,7 @@ int main(int argc, char *argv[])  {
     fail=fail||(anglesEntropy1D==NULL);
     if(fail!=0) {
         cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
 
 
@@ -407,7 +410,7 @@ int main(int argc, char *argv[])  {
     fail=fail||(dihedralsEntropy1D==NULL);
     if(fail!=0) {
         cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
 
 
@@ -420,7 +423,7 @@ int main(int argc, char *argv[])  {
     minDihedrals=(double*)malloc(dihedralsLength[rank]*sizeof(double));
     if((minBonds==NULL)||(minAngles==NULL)||(minDihedrals==NULL)||(maxBonds==NULL)||(maxAngles==NULL)||(maxDihedrals==NULL)) {
         cerr<<"ERROR ALLOCATNG MEMORY! ABORTING.\n";
-        MPI_Abort(MPI_COMM_WORLD, rc);
+        MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
     }
 
 
@@ -443,7 +446,7 @@ int main(int argc, char *argv[])  {
             //~ if(read_BAT_frame(&infile,double_prec, tmpBondsMaster, tmpAnglesMaster, tmpDihedralsMaster, nDihedrals)!=0) { //read the frame and react to errors
             if(read_BAT_frame(&infile,double_prec, nDihedrals, floatdummyarray[0], floatdummyarray[0], (float**)floatdummyarray, doubledummyarray,doubledummyarray,doubledummyarray,doubledummyarray,tmpBondsMaster, tmpAnglesMaster, tmpDihedralsMaster) !=0) { //read the frame and react to errors
                 cerr<<"An ERROR has occurred while reading the file " <<argv[1]<<" . Quitting Program.\n";
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
 
             if(i%10000==0) {
@@ -518,7 +521,7 @@ int main(int argc, char *argv[])  {
             }
             if((tmpMin<0.0)||(tmpMax<0.0)) {
                 cerr<<"ERROR: Bond "<<j<<" is smaller than 0.0"<<endl;
-                MPI_Abort(MPI_COMM_WORLD, rc);
+                MPI_Abort(MPI_COMM_WORLD, RC_ABORT);
             }
             tmpMin-=0.000000005;//and increase the boundaries a tiny bit
             tmpMax+=0.000000005;
