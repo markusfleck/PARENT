@@ -1,27 +1,28 @@
-# Build image via "docker build -t parent_centos7 .".
-# Run the image via "docker run -it -v $(pwd):/PARENT --name parent_centos7 parent_centos7".
+# Build image via "docker build -t parent_ubuntu18.04 .".
+# Run the image via "docker run -it -v $(pwd):/PARENT --name parent_ubuntu18.04 parent_ubuntu18.04".
 # The -v flag maps your current host directory directory to the /PARENT 
 # directory inside your container.
 # After closing with "exit", reaccess your container
-# via "docker container restart parent_centos7; docker container attach parent_centos7".
+# via "docker container restart parent_ubuntu18.04; docker container attach parent_ubuntu18.04".
 # sudo password for user "docker" inside container is just "docker".
 
-FROM centos:centos7
+FROM ubuntu:bionic
+
+RUN apt-get update
 
 # add tools here which you want to use
-RUN yum install -y nano which git
+RUN apt-get install -y nano git
 
 RUN mkdir /PARENT
 COPY ./ /PARENT
 
-RUN yum install -y centos-release-scl gcc-c++
-RUN yum install -y openmpi-devel sudo make devtoolset-7-gcc-c++
+RUN apt-get -y install libopenmpi-dev make g++ ssh sudo numactl
 
-RUN useradd -m docker && echo "docker:docker" | chpasswd && usermod -aG wheel docker
+RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 RUN chown -R docker:docker /PARENT;
 USER docker
 
-RUN . /etc/profile; module load mpi; cd /PARENT; scl enable devtoolset-7 bash; make clean; export MPI_NUM_PROCS=2; export OMP_NUM_THREADS=2; ./run.sh parameters; cat output/log.txt
+RUN cd /PARENT; make clean; export MPI_NUM_PROCS=2; export OMP_NUM_THREADS=2; ./run.sh parameters; cat output/log.txt
 RUN cd /PARENT; tail -n 16 output/*_MIE.txt > compare_MIE.txt
 RUN cd /PARENT; tail -n 10 output/*_MIST.txt > compare_MIST.txt
 
@@ -32,5 +33,5 @@ RUN cd /PARENT; diff compare_MIST.txt test_system/sample_output/sample_output_MI
 
 RUN cd /PARENT; rm -r output compare_MIE.txt compare_MIST.txt
 
-CMD . /etc/profile; module load mpi; cd /PARENT; scl enable devtoolset-7 bash
+CMD cd /PARENT; /bin/bash
 

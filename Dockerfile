@@ -1,1 +1,1 @@
-dockerfiles/Dockerfile_centos7
+dockerfiles/Dockerfile_ubuntu18.04
