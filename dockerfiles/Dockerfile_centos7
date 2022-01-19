@@ -1,0 +1,36 @@
+# Build image via "docker build -t parent_centos7 .".
+# Run the image via "docker run -it -v $(pwd):/PARENT --name parent_centos7 parent_centos7".
+# The -v flag maps your current host directory directory to the /PARENT 
+# directory inside your container.
+# After closing with "exit", reaccess your container
+# via "docker container restart parent_centos7; docker container attach parent_centos7".
+# sudo password for user "docker" inside container is just "docker".
+
+FROM centos:centos7
+
+# add tools here which you want to use
+RUN yum install -y nano which
+
+RUN mkdir /PARENT
+COPY ./ /PARENT
+
+RUN yum install -y centos-release-scl gcc-c++
+RUN yum install -y openmpi-devel sudo make devtoolset-7-gcc-c++
+
+RUN useradd -m docker && echo "docker:docker" | chpasswd && usermod -aG wheel docker
+RUN chown -R docker:docker /PARENT;
+USER docker
+
+RUN . /etc/profile; module load mpi; cd /PARENT; scl enable devtoolset-7 bash; export MPI_NUM_PROCS=2; export OMP_NUM_THREADS=2; ./run.sh parameters; cat output/log.txt
+RUN cd /PARENT; tail -n 16 output/*_MIE.txt > compare_MIE.txt
+RUN cd /PARENT; tail -n 10 output/*_MIST.txt > compare_MIST.txt
+
+# check that the following two commands don't give output, otherwise something went wrong 
+# and you should not trust your computed values
+RUN cd /PARENT; diff compare_MIE.txt test_system/sample_output/sample_output_MIE.txt
+RUN cd /PARENT; diff compare_MIST.txt test_system/sample_output/sample_output_MIST.txt
+
+RUN cd /PARENT; rm -r output compare_MIE.txt compare_MIST.txt
+
+CMD . /etc/profile; module load mpi; cd /PARENT; scl enable devtoolset-7 bash
+
