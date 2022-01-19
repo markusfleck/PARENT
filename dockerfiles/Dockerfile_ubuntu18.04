@@ -34,5 +34,5 @@ RUN cd /PARENT; diff compare_MIST.txt test_system/sample_output/sample_output_MI
 
 RUN cd /PARENT; rm -r output compare_MIE.txt compare_MIST.txt
 
-CMD cd /PARENT; /bin/bash
+CMD cd /PARENT; echo Run \"make clean\" in case of error.; /bin/bash
 

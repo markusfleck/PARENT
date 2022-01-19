@@ -33,5 +33,5 @@ RUN cd /PARENT; diff compare_MIST.txt test_system/sample_output/sample_output_MI
 
 RUN cd /PARENT; rm -r output compare_MIE.txt compare_MIST.txt
 
-CMD . /etc/profile; module load mpi; cd /PARENT; scl enable devtoolset-7 bash
+CMD . /etc/profile; module load mpi; cd /PARENT; echo Run \"make clean\" in case of error.; scl enable devtoolset-7 bash
 
