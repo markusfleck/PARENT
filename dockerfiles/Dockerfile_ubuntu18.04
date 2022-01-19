@@ -1,7 +1,8 @@
 # Build image via "docker build -t parent_ubuntu18.04 .".
 # Run the image via "docker run -it -v $(pwd):/PARENT --name parent_ubuntu18.04 parent_ubuntu18.04".
 # The -v flag maps your current host directory directory to the /PARENT 
-# directory inside your container.
+# directory inside your container. Make sure you don't have binaries (obj and exec folders)
+# compiled on the host system or another container in the host folder ("make clean" helps).
 # After closing with "exit", reaccess your container
 # via "docker container restart parent_ubuntu18.04; docker container attach parent_ubuntu18.04".
 # sudo password for user "docker" inside container is just "docker".
@@ -11,7 +12,7 @@ FROM ubuntu:bionic
 RUN apt-get update
 
 # add tools here which you want to use
-RUN apt-get install -y nano git
+RUN apt-get install -y nano vim git
 
 RUN mkdir /PARENT
 COPY ./ /PARENT
@@ -22,7 +23,7 @@ RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 RUN chown -R docker:docker /PARENT;
 USER docker
 
-RUN cd /PARENT; make clean; export MPI_NUM_PROCS=2; export OMP_NUM_THREADS=2; ./run.sh parameters; cat output/log.txt
+RUN cd /PARENT; make clean; export OMP_NUM_THREADS=4; ./run.sh parameters; cat output/log.txt
 RUN cd /PARENT; tail -n 16 output/*_MIE.txt > compare_MIE.txt
 RUN cd /PARENT; tail -n 10 output/*_MIST.txt > compare_MIST.txt
 
