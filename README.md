@@ -32,12 +32,12 @@ results generated using this program or modifications of it.
   your Linux system. 
   For example, if you want to use a single CPU with four cores for the calculation, issue 
   
-  	export MPI_NUM_PROCS=1; export OMP_NUM_THREADS=4; ./run.sh parameters
+  	export OMP_NUM_THREADS=4; ./run.sh parameters
   
   in a bash shell. The output of the configurational entropy terms using the MIST approximation 
-  is contained in "output/PARENT_suite_MIST.txt". If you are looking for the pairwise mutual
-  information terms, they are in "output/PARENT_suite_MIE.txt", with their indexing in
-  "output/PARENT_suite_MIE_topology.txt".
+  is contained in "output/PARENT_MIST.txt". If you are looking for the pairwise mutual
+  information terms, they are in "output/PARENT_MIE.txt", with their indexing in
+  "output/PARENT_MIE_topology.txt".
   
   If you run the code for testing purposes without any modifications,
   the calculation should take something like 2-5 minutes. The resulting values at the end of the
@@ -48,7 +48,9 @@ results generated using this program or modifications of it.
   unzip again or "chmod +x" the files which throw errors.
 	
   If you get warnings about a node not being able to bind a process and performance is not as expected, 
-  installing libnumactl and libnumactl-devel packages and recompiling/installing MPI should help.
+  installing numactl (maybe devel) packages and recompiling/installing MPI should help (for
+  using Docker, as outlined below, this behavior is expected and should be fine on a single CPU, which is
+  what the Dockerfiles are intended for).
 	
   You are strongly encouraged to read the rest of this document, but at least the next section.
 
@@ -56,7 +58,9 @@ results generated using this program or modifications of it.
 
 
 
-1) INSTALLATION AND TESTING
+## 1) INSTALLATION AND TESTING
+
+### 2.1) System installation
 
   This code uses MPI as well as openMP parallelization, so you need to make
   sure that your system supports this. The code was developed and tested 
@@ -69,15 +73,22 @@ results generated using this program or modifications of it.
   programs, proceed as follows:
 
   If, for example, you want to test this code on a machine with a single 
-  processor offering 4 CPU-cores, from a bash shell run:
+  processor offering 8 CPU threads, from a bash shell run:
   
-    export MPI_NUM_PROCS=1; export OMP_NUM_THREADS=4; ./run.sh parameters
+    export OMP_NUM_THREADS=8; ./run.sh parameters
     
   Otherwise, if you want to use the code with a batch system (job scheduler)
   in e.g. a cluster environment, just use your custom submission script
-  and in it issue the above command, with MPI_NUM_PROCS set to the number of
-  compute nodes and OMP_NUM_THREADS set to the number of CPU-cores per
-  node. If you happen to use the TORQUE Resource Manager, a sample 
+  and in it issue the above command, with OMP_NUM_THREADS set to the number of CPU threads per
+  node. The run.sh script invokes mpirun via "--map-by ppr:1:node:pe=$OMP_NUM_THREADS".
+  For example, if you want to calculate on 4 nodes with 8 physical cores and 16 virtual cores (i.e.  16 CPU threads),
+  you would issue "export OMP_NUM_THREADS=16; ./run.sh parameters". The according "--map-by ppr:1:node:pe=16" tells 
+  MPI to spawn one MPI process on each node, with 16 openMP threads each. If the 4 physical cores reside on two 
+  CPUs in each node, you could change to mapping per socket, i.e. use "export OMP_NUM_THREADS=8" and, in run.sh,
+  "--map-by ppr:1:socket:pe=$OMP_NUM_THREADS". Alternatively, you could spawn two MPI processes per CPU
+  socket: "--map-by ppr:2:socket:pe=4". Certainly, many combinations are possibly, and you could (and should) 
+  check for performance gains. From my personal experience with my machines, one MPI process per node/socket is a safe 
+  bet. If you happen to use the TORQUE Resource Manager, a sample 
   submission script called "run.pbs" is supplied in the top directory.
   The script is set up for 4 nodes and 16 cores. You might want to modify these numbers
   to fit your environment.
@@ -85,10 +96,14 @@ results generated using this program or modifications of it.
   Furthermore, depending on your MPI version and cluster architecture,
   in the file "run.sh" you might want to change this part of the two MPI invocation lines:
   
-    mpirun -bynode -cpus-per-proc $OMP_NUM_THREADS -np $MPI_NUM_PROCS --mca btl tcp,self,sm --report-bindings 
+    mpirun --use-hwthread-cpus --bind-to hwthread --mca btl vader,self,tcp 
 
-  Especially, if you are using InfiniBand, you might want to change the tcp part  
-  to openib (e. g. to --mca btl openib,self,sm).
+  "--use-hwthread-cpus --bind-to hwthread" tells MPI to consider virtual rather than physical cores.
+  During my benchmarking, virtual cores showed almost the same computational power than physical cores,
+  leading to a speedup of a factor of two (each physical core features two virutal cores), 
+  so using virtual cores should be the go-to approach in almost all but
+  the most exotic CPU architectures. Next, if you are using InfiniBand, you might want to change the tcp part  
+  to openib (e. g. to --mca btl vader,self,openib). If you don't have "vader", you could try with "sm" instead.
   
   After executing the "run.sh" script, issue the following commands to check if 
   everything went correctly:
@@ -110,7 +125,7 @@ results generated using this program or modifications of it.
   the same results. If this is not the case, that means that your system is not executing 
   the code in a proper manner (run condition). 
   
-  With that said, I have been using the code now for five years and never observed any deviations from
+  With that said, I have been using the code now for ten years and never observed any deviations from
   previously calculated results. Neither on a XEON cluster, a Threadripper CPU nor even on
   a Raspberry Pi using ARM architecture.
   
@@ -118,12 +133,58 @@ results generated using this program or modifications of it.
   "exec". If this is not the case, you should check the file "output/log.txt" to see what went wrong.
   For compilation, the "Makefile" in the top directory is processed by "run.sh", so this is where you might 
   want to start troubleshooting (or maybe fine tuning).
+    
+### 2.2) Docker
+
+  For building Docker images, two Dockerfiles have been added in the dockerfiles directory, one setting up 
+  Ubuntu 18.04, the other setting up CentOS7. A symbolic link named "Dockerfile", pointing to the Ubuntu Dockerfile,
+  has been provided in the main directory for convenience. You can switch to CentOS via 
+
+    rm Dockerfile; ln -s dockerfiles/Dockerfile_centos7 ./Dockerfile
+
+  if you prefer. Note that during testing, I had issues with MPI memory binding. On a single CPU, this should 
+  be perfectly fine. On a cluster however, this can lead to problems, which is why such usage is discouraged. 
+  While the provided Dockerfiles might work in a distributed computation environment, I did not perform any testing
+  in this perspective.
+
+  Building and running the Docker image works in the following manner. Note that you might need root privileges
+  on the host machine for the following commands to be able to talk to the Docker daemon. Build the image via
+
+    docker build -t parent
+
+  PARENT is compiled during the build. A user named "docker" with sudo privileges is created in the image (if you want 
+  to become root, issue "sudo su"). The password for the user is set to "docker", you might want to change this. 
+  You can start a container from the image issuing
+
+    docker run -it -v $(pwd):/PARENT --name parent parent
+
+  This logs you in the container as the docker user. The "-v $(pwd):/PARENT" maps your current host directory to the
+  /PARENT directory in the container. Changes in the host directory are reflected in the container /PARENT directory
+  and vice versa. Note that this means that the PARENT binaries compiled during the image building step are overlayed
+  by the host working directory. In particular, if your current mapped host working directory contains binaries
+  compiled on the host (or for the other Dockerfile, Ubuntu vs. CentOS), problems will arise. In this case, from within 
+  the container, issue 
+
+    make clean; make
+
+  If you do not want such a mapping to the host directory, remove the "-v $(pwd):/PARENT" switch. In this case, you
+  will acccess the binaries compiled during the image building stage. Note, however, that you need to transfer your
+  calculated files manually from the container to the host (refer to the according docker documentation in this case).
+  If you delete the container without having the files transferred and without directory mapping, your calulations are 
+  lost.
+
+  After stopping the container using the "exit" command inside the container shell, you can restart it via
+
+    docker container restart parent; docker container attach parent
+
+  The Dockerfiles contain a short summary of the commands given here. Also, you might want to install
+  additional tools during bulding the docker image. The according location to do so is marked with a comment.
+
+  Note that binding more than one MPI process per CPU using Docker turned out problematic during my testing, so it is
+  discouraged.  
   
   
-  
-  
-  
-2) RUNNING YOUR OWN TRAJECTORIES
+## 2) RUNNING YOUR OWN TRAJECTORIES
   
   The easiest way to do this is by just modifying the file "parameters" in the top directory.
   
@@ -165,17 +226,13 @@ results generated using this program or modifications of it.
   	
     make clean; make
   
-  when you change computer architecture (e. g. heterogeneous cluster) and also make sure that you are not
-  overwriting previous results (change NAME in the parameterfile).
+  when you change computer architecture or opering system (e. g. heterogeneous cluster, docker) and 
+  also make sure that you are not overwriting previous results (change NAME in the parameterfile).
+      
+## 3) EXPLANATION OF THE PROGRAMS
   
   
-  
-  
-  
-3) EXPLANATION OF THE PROGRAMS
-  
-  
-  3.1) BAT_builder.x
+### 3.1) BAT_builder.x
     
 This program converts your GROMACS topology (.top) and trajectory (.xtc) files to binary .bat
 trajectory files, which are then processed by PARENT.x, the core program of
@@ -226,7 +283,7 @@ are added in order for the complex to have a connected topology. This is done au
 that the chosen topology for every molecule in the complex is consistent with the topology which would be chosen if the molecules would be treated separately, in isolation. 
 
 
-3.2) PARENT.x
+### 3.2) PARENT.x
 
 This program can be considered the core of this suite. It calculates the configurational entropy according to the pairwise 
 Mutual Information Expansion (MIE). For more detailed information, please read our article in the Journal of Chemical Theory and Computation  
@@ -261,14 +318,12 @@ The header of the file includes the same information as for the .bat file and ad
 ,the numbers of bins which were used for the entropy calculation. See section 2 for further information.
 
 
-Remember that you need to invoke the program using MPI, e. g.
+To have more control over the MPI process bindings, use e. g.
 
-	mpirun -bynode -cpus-per-proc 16 -np 4 --mca btl tcp,self,sm ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
-
-for openMPI version 1.7.4 on a cluster of 4 nodes with 16 cores per node (For InfiniBand, you change tcp to openib).
+	mpirun --use-hwthread-cpus --bind-to hwthread --mca btl vader,self,tcp --report-bindings --map-by ppr:1:node:pe=16 ./PARENT.x input.bat entropy.par #bondsbins1D #anglesbins1D #dihedralsbins1D #bondsbins2D #anglesbins2D #dihedralsbins2D
 
 
-3.3) get_PAR_MIE.x
+### 3.3) get_PAR_MIE.x
 
 The output of PARENT.x is a binary file (.par), so get_PAR_MIE.x is provided to output its contents to stdout in text form.
 First it extracts a list of all 1D entropy terms of all degrees of freedom (bonds, angles, torsions). Then follows
@@ -281,8 +336,10 @@ The program is used in the following manner:
 
 	./get_PAR_MIE.x input.par
 
+It can be started via MPI using an analogue command as for PARENT.x
 
-3.4) get_PAR_info.x
+
+### 3.4) get_PAR_info.x
 
 The previous program (get_PAR_MIE.x) outputs all entropy/mutual information terms, but gives no information about
 which atoms constitute a specific degree of freedom (e.g. bond 729). For that purpose get_PAR_info.x is provided. 
@@ -309,7 +366,7 @@ The program is used in the following manner:
 	./get_PAR_info.x input.par
 
 
-3.5) get_PAR_MIST.x
+### 3.5) get_PAR_MIST.x
 
 Although based on a different mathematical framework than MIE, the Maximum Information Spanning Tree (MIST) approximation relies on the same 
 terms to be computed as for MIE. Empirically it seems to demonstrate superior convergence properties, so from a computational perspective
@@ -330,7 +387,7 @@ The program is used in the following manner:
 
 Remember that you need to invoke it using MPI (see subsection 3.2 for further details).
 
-4) IO library
+## 4) IO library
 
 The PARENT suite comprises a library for easily accessing its binary file formats. To use it, link with 
 
@@ -344,7 +401,7 @@ in your c++ source files. The Makefile in the top directory additionally hints t
 
 
 
-5) CONTACT INFORMATION
+## 5) CONTACT INFORMATION
 
 If you have any questions, feel free to contact: 
 

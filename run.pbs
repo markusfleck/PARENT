@@ -4,7 +4,6 @@
 
 
 # Specify how many MPI processes and how many threads per process you would like to use (in compliance with the above requested)
-export MPI_NUM_PROCS=4
 export OMP_NUM_THREADS=16
 
 
